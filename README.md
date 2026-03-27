@@ -196,4 +196,4 @@ The original implementation plan is captured in:
 
 ## License
 
-No license has been added yet. If you plan to keep this repository public, adding an explicit license is recommended.
+This repository is licensed under the MIT License. See `LICENSE` for details.
