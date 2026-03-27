@@ -1,0 +1,93 @@
+{
+  "contractName": "MockInnovationGovernor",
+  "sourceName": "src/mocks/MockInnovationGovernor.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "voter",
+          "type": "address"
+        }
+      ],
+      "name": "hasVoted",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "voter",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "hasVoted_",
+          "type": "bool"
+        }
+      ],
+      "name": "setHasVoted",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum IGovernor.ProposalState",
+          "name": "proposalState",
+          "type": "uint8"
+        }
+      ],
+      "name": "setProposalState",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        }
+      ],
+      "name": "state",
+      "outputs": [
+        {
+          "internalType": "enum IGovernor.ProposalState",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "608060405234801561000f575f80fd5b5061026d8061001d5f395ff3fe608060405234801561000f575f80fd5b506004361061004a575f3560e01c80630fb266971461004e5780633e4f49e614610063578063438596321461009b57806371c66dd7146100e3575b5f80fd5b61006161005c366004610158565b610125565b005b610085610071366004610189565b5f9081526020819052604090205460ff1690565b60405161009291906101b4565b60405180910390f35b6100d36100a93660046101f5565b5f9182526001602090815260408084206001600160a01b0393909316845291905290205460ff1690565b6040519015158152602001610092565b6100616100f136600461021f565b5f9283526001602090815260408085206001600160a01b039490941685529290529120805460ff1916911515919091179055565b5f828152602081905260409020805482919060ff1916600183600781111561014f5761014f6101a0565b02179055505050565b5f8060408385031215610169575f80fd5b8235915060208301356008811061017e575f80fd5b809150509250929050565b5f60208284031215610199575f80fd5b5035919050565b634e487b7160e01b5f52602160045260245ffd5b60208101600883106101d457634e487b7160e01b5f52602160045260245ffd5b91905290565b80356001600160a01b03811681146101f0575f80fd5b919050565b5f8060408385031215610206575f80fd5b82359150610216602084016101da565b90509250929050565b5f805f60608486031215610231575f80fd5b83359250610241602085016101da565b915060408401358015158114610255575f80fd5b80915050925092509256fea164736f6c6343000818000a",
+  "deployedBytecode": "608060405234801561000f575f80fd5b506004361061004a575f3560e01c80630fb266971461004e5780633e4f49e614610063578063438596321461009b57806371c66dd7146100e3575b5f80fd5b61006161005c366004610158565b610125565b005b610085610071366004610189565b5f9081526020819052604090205460ff1690565b60405161009291906101b4565b60405180910390f35b6100d36100a93660046101f5565b5f9182526001602090815260408084206001600160a01b0393909316845291905290205460ff1690565b6040519015158152602001610092565b6100616100f136600461021f565b5f9283526001602090815260408085206001600160a01b039490941685529290529120805460ff1916911515919091179055565b5f828152602081905260409020805482919060ff1916600183600781111561014f5761014f6101a0565b02179055505050565b5f8060408385031215610169575f80fd5b8235915060208301356008811061017e575f80fd5b809150509250929050565b5f60208284031215610199575f80fd5b5035919050565b634e487b7160e01b5f52602160045260245ffd5b60208101600883106101d457634e487b7160e01b5f52602160045260245ffd5b91905290565b80356001600160a01b03811681146101f0575f80fd5b919050565b5f8060408385031215610206575f80fd5b82359150610216602084016101da565b90509250929050565b5f805f60608486031215610231575f80fd5b83359250610241602085016101da565b915060408401358015158114610255575f80fd5b80915050925092509256fea164736f6c6343000818000a",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"voter\",\"type\":\"address\"}],\"name\":\"hasVoted\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"voter\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"hasVoted_\",\"type\":\"bool\"}],\"name\":\"setHasVoted\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"},{\"internalType\":\"enum IGovernor.ProposalState\",\"name\":\"proposalState\",\"type\":\"uint8\"}],\"name\":\"setProposalState\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"}],\"name\":\"state\",\"outputs\":[{\"internalType\":\"enum IGovernor.ProposalState\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/mocks/MockInnovationGovernor.sol\":\"MockInnovationGovernor\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/governance/IGovernor.sol\":{\"keccak256\":\"0xbf0c9bd011a28ab3c5ebea85eda53d23eb56575cf850d21debe2c7ea93f6e443\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d0fd7bd2afc1155ce1d9c5ae554575961f45302726d56646ea12306293188ae1\",\"dweb:/ipfs/QmXLTLBgKVn4mjJdT7fCjhGRwGMdnCHVvGg9MMLps34p1L\"]},\"lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol\":{\"keccak256\":\"0x4764a3cb550846ec714888e19407f05c8d3cf56181d4a090f451beb8064b1a41\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c0dfe15ab99b1ec4aec1d0c90dc077b27aab5a1a0d305c6c641698100fc27c64\",\"dweb:/ipfs/QmWWsr2frKgKhNMJwdRXBe7vgRHCzSNTLyGMxbbc6Fuz81\"]},\"lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol\":{\"keccak256\":\"0x48ac871f9606209a4a80d63ec7ce4e98c21d7fd4126a9f35d43cad74e852eb22\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://fdac07a8bda25166e5f0d0b5a0f1668a0cef60914ffa5c66a4a16eb84919d155\",\"dweb:/ipfs/QmSDKyp6uAmbJMUyuKh5CUDn3EBjXewxQZQRLsGLbWoYo7\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x97a5e5c6659add3f13418d219e705d6cc732ca3c31b62a64d66f92b159c5375d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4a42c9e92e0b080329a3084019cc95423bdc4c5c20250a82e53d252650e79da9\",\"dweb:/ipfs/QmXffSTGqZXofPd7ueueXQowGPTQr9DJvZEzQFmJKzB24N\"]},\"src/mocks/MockInnovationGovernor.sol\":{\"keccak256\":\"0x524cd45152cafc1657c831d147809593c7f067852c9ce0518dffa6777c749b40\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://337876c891dce0322b5f7366c318f8f853eeb539600eb235def22d594e30d73f\",\"dweb:/ipfs/QmQeCgmpLKDuz5KRoE5SBypWUppachymTzY8zKNi3Zz451\"]}},\"version\":1}"
+}

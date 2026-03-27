@@ -46,13 +46,13 @@ export function WalletPanel({ tokenAddress, expectedChainId }: WalletPanelProps)
     <section className="panel">
       <div className="panel-header">
         <div>
-          <h2>Wallet</h2>
-          <p className="muted">Connect on Sepolia for self-delegation and voting actions.</p>
+          <h2>Wallet Access</h2>
+          <p className="muted">Connect a Sepolia wallet to delegate votes and sign governance actions.</p>
         </div>
       </div>
       <div className="stack">
         <div className="wallet-row">
-          <span className="wallet-label">Connection</span>
+          <span className="wallet-label">Wallet</span>
           <span className="wallet-value">
             {isConnected && address ? `${formatAddress(address)} via ${connector?.name ?? 'wallet'}` : 'Disconnected'}
           </span>
@@ -89,7 +89,7 @@ export function WalletPanel({ tokenAddress, expectedChainId }: WalletPanelProps)
             onClick={handleDelegate}
             disabled={!isConnected || !address || networkMismatch || delegatePending}
           >
-            {delegatePending ? 'Submitting...' : 'Self-Delegate CIF'}
+            {delegatePending ? 'Submitting...' : 'Delegate Votes'}
           </button>
         </div>
         {delegateHash ? (

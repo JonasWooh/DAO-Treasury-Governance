@@ -2,6 +2,7 @@ import frontendConfig from '../generated/frontend.config.sepolia.json';
 import type {
   DemoEvidenceManifest,
   DeploymentManifest,
+  FundingStateManifest,
   FrontendConfig,
   ProposalScenarioManifest,
   ScreenshotManifest,
@@ -9,7 +10,10 @@ import type {
 
 const REQUIRED_CONTRACT_NAMES = [
   'CampusInnovationFundToken',
+  'ReputationRegistry',
+  'HybridVotesAdapter',
   'InnovationGovernor',
+  'FundingRegistry',
   'TimelockController',
   'InnovationTreasury',
   'TreasuryOracle',
@@ -49,6 +53,9 @@ export function validateFrontendConfig(): FrontendConfig {
   }
   if (!config.evidenceSources.deployments || !config.evidenceSources.proposalScenarios || !config.evidenceSources.demoEvidence || !config.evidenceSources.screenshotManifest) {
     throw new Error('Frontend config is missing one or more evidence source paths.');
+  }
+  if (!config.evidenceSources.fundingState) {
+    throw new Error('Frontend config is missing the funding state source path.');
   }
   return config;
 }
@@ -120,6 +127,35 @@ export function validateDemoEvidenceManifest(payload: unknown): DemoEvidenceMani
   expectObject(etherscanLinks.addresses, 'Demo evidence manifest.etherscanLinks.addresses');
   expectObject(etherscanLinks.transactions, 'Demo evidence manifest.etherscanLinks.transactions');
   return manifest as unknown as DemoEvidenceManifest;
+}
+
+export function validateFundingStateManifest(payload: unknown): FundingStateManifest {
+  const manifest = expectObject(payload, 'Funding state manifest');
+  const network = expectObject(manifest.network, 'Funding state manifest.network');
+  const contracts = expectObject(manifest.contracts, 'Funding state manifest.contracts');
+  const reputationSummary = expectObject(manifest.reputationSummary, 'Funding state manifest.reputationSummary');
+
+  if (network.name !== 'sepolia' || network.chainId !== 11155111) {
+    throw new Error('Funding state manifest must target Sepolia.');
+  }
+  if (typeof manifest.generatedAt !== 'string' || manifest.generatedAt.length === 0) {
+    throw new Error('Funding state manifest is missing generatedAt.');
+  }
+  for (const contractName of ['FundingRegistry', 'ReputationRegistry', 'HybridVotesAdapter'] as const) {
+    if (!isAddress(contracts[contractName])) {
+      throw new Error(`Funding state manifest is missing a valid address for ${contractName}.`);
+    }
+  }
+  for (const key of ['members', 'proposals', 'projects', 'milestones'] as const) {
+    if (!Array.isArray(manifest[key])) {
+      throw new Error(`Funding state manifest.${key} must be an array.`);
+    }
+  }
+  if (typeof reputationSummary.totalActiveReputation !== 'string' || typeof reputationSummary.activeMemberCount !== 'number') {
+    throw new Error('Funding state manifest.reputationSummary is malformed.');
+  }
+
+  return manifest as unknown as FundingStateManifest;
 }
 
 export function validateScreenshotManifest(payload: unknown): ScreenshotManifest {

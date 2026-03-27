@@ -20,6 +20,7 @@ DEFAULT_PROTOCOL_CONFIG = ROOT / "config" / "sepolia.protocols.json"
 DEFAULT_OUTPUT_PATH = ROOT / "deployments" / "deployments.sepolia.json"
 
 ORACLE_ARTIFACT = ARTIFACTS_DIR / "src" / "oracle" / "TreasuryOracle" / "TreasuryOracle.json"
+FUNDING_REGISTRY_ARTIFACT = ARTIFACTS_DIR / "src" / "funding" / "FundingRegistry" / "FundingRegistry.json"
 ADAPTER_ARTIFACT = ARTIFACTS_DIR / "src" / "adapters" / "AaveWethAdapter" / "AaveWethAdapter.json"
 TREASURY_ARTIFACT = ARTIFACTS_DIR / "src" / "treasury" / "InnovationTreasury" / "InnovationTreasury.json"
 SEPOLIA_CHAIN_ID = 11155111
@@ -30,6 +31,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--rpc-url", default=os.environ.get("SEPOLIA_RPC_URL"))
     parser.add_argument("--private-key", default=os.environ.get("SEPOLIA_PRIVATE_KEY"))
     parser.add_argument("--timelock", default=os.environ.get("CIF_TIMELOCK"))
+    parser.add_argument("--governor", default=os.environ.get("CIF_GOVERNOR"))
+    parser.add_argument("--reputation-registry", default=os.environ.get("CIF_REPUTATION_REGISTRY"))
     parser.add_argument("--protocol-config", default=str(DEFAULT_PROTOCOL_CONFIG))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH))
     parser.add_argument(
@@ -129,7 +132,6 @@ def main() -> None:
 
     rpc_url = require_value(args.rpc_url, "rpc-url or SEPOLIA_RPC_URL")
     private_key = require_value(args.private_key, "private-key or SEPOLIA_PRIVATE_KEY")
-    timelock_address_raw = require_value(args.timelock, "timelock or CIF_TIMELOCK")
 
     w3 = Web3(Web3.HTTPProvider(rpc_url))
     if not w3.is_connected():
@@ -137,13 +139,50 @@ def main() -> None:
     if w3.eth.chain_id != SEPOLIA_CHAIN_ID:
         raise RuntimeError(f"Connected to chainId {w3.eth.chain_id}, expected {SEPOLIA_CHAIN_ID}.")
 
-    timelock_address = to_checked_address(w3, timelock_address_raw, "timelock")
     protocol_config = load_protocol_config(w3, Path(args.protocol_config))
+
+    output_path = Path(args.output)
+    if output_path.exists():
+        deployment_manifest: dict[str, Any] = json.loads(output_path.read_text(encoding="utf-8"))
+    else:
+        deployment_manifest = {}
+
+    governance_contracts = deployment_manifest.get("contracts", {})
+    timelock_raw = args.timelock or governance_contracts.get("TimelockController")
+    governor_raw = args.governor or governance_contracts.get("InnovationGovernor")
+    reputation_raw = args.reputation_registry or governance_contracts.get("ReputationRegistry")
+
+    timelock_address = to_checked_address(w3, require_value(timelock_raw, "timelock or CIF_TIMELOCK"), "timelock")
+    governor_address = to_checked_address(w3, require_value(governor_raw, "governor or CIF_GOVERNOR"), "governor")
+    reputation_registry_address = to_checked_address(
+        w3,
+        require_value(reputation_raw, "reputation-registry or CIF_REPUTATION_REGISTRY"),
+        "reputation-registry",
+    )
 
     account: LocalAccount = Account.from_key(private_key)
     tx = TransactionSender(w3=w3, account=account, gas_price_wei=args.gas_price_wei)
 
+    expected_funding_registry_address = (
+        deployment_manifest.get("constructorArgs", {}).get("ReputationRegistry", [None, None])[1]
+    )
+    predicted_funding_registry_address = predict_create_address(account.address, tx.nonce + 1)
+    if expected_funding_registry_address is not None:
+        expected_funding_registry_address = to_checked_address(
+            w3,
+            expected_funding_registry_address,
+            "deployment-manifest constructorArgs.ReputationRegistry[1]",
+        )
+        if expected_funding_registry_address != predicted_funding_registry_address:
+            raise RuntimeError(
+                "FundingRegistry deployment address no longer matches the address baked into ReputationRegistry. "
+                f"Expected {expected_funding_registry_address}, but the next deployment flow will create "
+                f"{predicted_funding_registry_address}. Use a clean deployer nonce sequence or rerun the "
+                "governance spine deployment before continuing."
+            )
+
     oracle_artifact = load_artifact(ORACLE_ARTIFACT)
+    funding_registry_artifact = load_artifact(FUNDING_REGISTRY_ARTIFACT)
     adapter_artifact = load_artifact(ADAPTER_ARTIFACT)
     treasury_artifact = load_artifact(TREASURY_ARTIFACT)
 
@@ -154,6 +193,12 @@ def main() -> None:
             protocol_config["chainlink"]["ethUsdFeed"],
             protocol_config["chainlink"]["helperStalePriceThreshold"],
         ],
+    )
+
+    funding_registry_contract = build_contract(w3, funding_registry_artifact)
+    funding_registry_address, funding_registry_deploy_tx = tx.send_contract_deployment(
+        funding_registry_contract,
+        [timelock_address, governor_address, reputation_registry_address],
     )
 
     predicted_treasury_address = predict_create_address(account.address, tx.nonce + 1)
@@ -177,6 +222,7 @@ def main() -> None:
             protocol_config["assets"]["weth"],
             oracle_address,
             adapter_address,
+            funding_registry_address,
         ],
     )
 
@@ -185,13 +231,7 @@ def main() -> None:
             f"Predicted treasury address mismatch: expected {predicted_treasury_address}, got {treasury_address}"
         )
 
-    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if output_path.exists():
-        deployment_manifest: dict[str, Any] = json.loads(output_path.read_text(encoding="utf-8"))
-    else:
-        deployment_manifest = {}
 
     deployment_manifest["network"] = protocol_config["network"]
     deployment_manifest.setdefault("contracts", {})
@@ -203,6 +243,7 @@ def main() -> None:
     deployment_manifest["contracts"].update(
         {
             "TreasuryOracle": oracle_address,
+            "FundingRegistry": funding_registry_address,
             "AaveWethAdapter": adapter_address,
             "InnovationTreasury": treasury_address,
         }
@@ -221,23 +262,33 @@ def main() -> None:
                 protocol_config["chainlink"]["ethUsdFeed"],
                 protocol_config["chainlink"]["helperStalePriceThreshold"],
             ],
+            "FundingRegistry": [timelock_address, governor_address, reputation_registry_address],
             "AaveWethAdapter": [
                 treasury_address,
                 protocol_config["assets"]["weth"],
                 protocol_config["aave"]["pool"],
                 protocol_config["aave"]["aWeth"],
             ],
-            "InnovationTreasury": [timelock_address, protocol_config["assets"]["weth"], oracle_address, adapter_address],
+            "InnovationTreasury": [
+                timelock_address,
+                protocol_config["assets"]["weth"],
+                oracle_address,
+                adapter_address,
+                funding_registry_address,
+            ],
         }
     )
     deployment_manifest["config"]["treasuryProtocolConfig"] = {
         "helperStalePriceThreshold": protocol_config["chainlink"]["helperStalePriceThreshold"],
         "predictedTreasuryAddress": predicted_treasury_address,
         "timelock": timelock_address,
+        "governor": governor_address,
+        "reputationRegistry": reputation_registry_address,
     }
     deployment_manifest["transactions"].update(
         {
             "deployTreasuryOracle": oracle_deploy_tx,
+            "deployFundingRegistry": funding_registry_deploy_tx,
             "deployAaveWethAdapter": adapter_deploy_tx,
             "deployInnovationTreasury": treasury_deploy_tx,
         }

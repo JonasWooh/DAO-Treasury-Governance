@@ -6,8 +6,10 @@ import os
 from pathlib import Path
 from typing import Any
 
+import rlp
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
+from eth_utils import keccak, to_canonical_address, to_checksum_address
 from web3 import Web3
 from web3.contract import Contract
 
@@ -18,6 +20,8 @@ DEFAULT_OUTPUT_PATH = ROOT / "deployments" / "deployments.sepolia.json"
 
 TOKEN_ARTIFACT = ARTIFACTS_DIR / "src" / "governance" / "CampusInnovationFundToken" / "CampusInnovationFundToken.json"
 GOVERNOR_ARTIFACT = ARTIFACTS_DIR / "src" / "governance" / "InnovationGovernor" / "InnovationGovernor.json"
+REPUTATION_ARTIFACT = ARTIFACTS_DIR / "src" / "governance" / "ReputationRegistry" / "ReputationRegistry.json"
+HYBRID_VOTES_ARTIFACT = ARTIFACTS_DIR / "src" / "governance" / "HybridVotesAdapter" / "HybridVotesAdapter.json"
 TIMELOCK_ARTIFACT = (
     ARTIFACTS_DIR
     / "lib"
@@ -32,6 +36,9 @@ TOKEN_UNIT = 10**18
 INITIAL_VOTER_ALLOCATION = 200_000 * TOKEN_UNIT
 INITIAL_GOVERNANCE_RESERVE = 400_000 * TOKEN_UNIT
 TIMELOCK_MIN_DELAY_SECONDS = 120
+GOVERNANCE_DEPLOYMENT_COUNT = 5
+GOVERNANCE_POST_DEPLOYMENT_CALL_COUNT = 8
+TREASURY_PRE_FUNDING_DEPLOYMENTS = 1
 
 
 def parse_args() -> argparse.Namespace:
@@ -76,6 +83,11 @@ def build_contract(w3: Web3, artifact: dict[str, Any], address: str | None = Non
     if address is None:
         return w3.eth.contract(abi=artifact["abi"], bytecode=artifact["bytecode"])
     return w3.eth.contract(address=address, abi=artifact["abi"])
+
+
+def predict_create_address(deployer: str, nonce: int) -> str:
+    encoded = rlp.encode([to_canonical_address(deployer), nonce])
+    return to_checksum_address(keccak(encoded)[12:])
 
 
 class TransactionSender:
@@ -134,9 +146,24 @@ def main() -> None:
 
     token_artifact = load_artifact(TOKEN_ARTIFACT)
     governor_artifact = load_artifact(GOVERNOR_ARTIFACT)
+    reputation_artifact = load_artifact(REPUTATION_ARTIFACT)
+    hybrid_votes_artifact = load_artifact(HYBRID_VOTES_ARTIFACT)
     timelock_artifact = load_artifact(TIMELOCK_ARTIFACT)
 
     tx = TransactionSender(w3=w3, account=account, gas_price_wei=args.gas_price_wei)
+
+    predicted_timelock_address = predict_create_address(account.address, tx.nonce + 1)
+    # FundingRegistry is deployed in the second script after:
+    # 1. every governance-spine deployment transaction,
+    # 2. every post-deployment governance setup call in this script, and
+    # 3. the TreasuryOracle deployment that precedes FundingRegistry there.
+    predicted_funding_registry_address = predict_create_address(
+        account.address,
+        tx.nonce
+        + GOVERNANCE_DEPLOYMENT_COUNT
+        + GOVERNANCE_POST_DEPLOYMENT_CALL_COUNT
+        + TREASURY_PRE_FUNDING_DEPLOYMENTS,
+    )
 
     token_contract = build_contract(w3, token_artifact)
     token_address, token_deploy_tx = tx.send_contract_deployment(token_contract, [account.address])
@@ -146,11 +173,27 @@ def main() -> None:
         timelock_contract,
         [TIMELOCK_MIN_DELAY_SECONDS, [], [Web3.to_checksum_address("0x0000000000000000000000000000000000000000")], account.address],
     )
+    if timelock_address != predicted_timelock_address:
+        raise RuntimeError(
+            f"Predicted timelock address mismatch: expected {predicted_timelock_address}, got {timelock_address}"
+        )
+
+    reputation_contract = build_contract(w3, reputation_artifact)
+    reputation_address, reputation_deploy_tx = tx.send_contract_deployment(
+        reputation_contract,
+        [timelock_address, predicted_funding_registry_address],
+    )
+
+    hybrid_votes_contract = build_contract(w3, hybrid_votes_artifact)
+    hybrid_votes_address, hybrid_votes_deploy_tx = tx.send_contract_deployment(
+        hybrid_votes_contract,
+        [token_address, reputation_address],
+    )
 
     governor_contract = build_contract(w3, governor_artifact)
     governor_address, governor_deploy_tx = tx.send_contract_deployment(
         governor_contract,
-        [token_address, timelock_address],
+        [hybrid_votes_address, timelock_address],
     )
 
     token_instance = build_contract(w3, token_artifact, token_address)
@@ -206,6 +249,8 @@ def main() -> None:
         },
         "contracts": {
             "CampusInnovationFundToken": token_address,
+            "ReputationRegistry": reputation_address,
+            "HybridVotesAdapter": hybrid_votes_address,
             "TimelockController": timelock_address,
             "InnovationGovernor": governor_address,
         },
@@ -218,10 +263,17 @@ def main() -> None:
         "transactions": {
             "deployToken": token_deploy_tx,
             "deployTimelock": timelock_deploy_tx,
+            "deployReputationRegistry": reputation_deploy_tx,
+            "deployHybridVotesAdapter": hybrid_votes_deploy_tx,
             "deployGovernor": governor_deploy_tx,
             **mint_transactions,
             **timelock_role_transactions,
             "renounceTokenOwnership": token_ownership_tx,
+        },
+        "constructorArgs": {
+            "ReputationRegistry": [timelock_address, predicted_funding_registry_address],
+            "HybridVotesAdapter": [token_address, reputation_address],
+            "InnovationGovernor": [hybrid_votes_address, timelock_address],
         },
     }
 

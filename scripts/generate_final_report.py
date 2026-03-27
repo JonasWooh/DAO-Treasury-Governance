@@ -13,6 +13,7 @@ from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, S
 from deliverable_common import (
     DEPLOYMENT_MANIFEST_PATH,
     EVIDENCE_MANIFEST_PATH,
+    FUNDING_STATE_PATH,
     REPORT_PATH,
     ROOT,
     SCENARIO_MANIFEST_PATH,
@@ -38,6 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--deployment-manifest', default=str(DEPLOYMENT_MANIFEST_PATH))
     parser.add_argument('--scenario-manifest', default=str(SCENARIO_MANIFEST_PATH))
     parser.add_argument('--evidence-manifest', default=str(EVIDENCE_MANIFEST_PATH))
+    parser.add_argument('--funding-state-manifest', default=str(FUNDING_STATE_PATH))
     parser.add_argument('--screenshot-manifest', default=str(SCREENSHOT_MANIFEST_PATH))
     parser.add_argument('--workbook-summary', default=str(WORKBOOK_SUMMARY_PATH))
     parser.add_argument('--output', default=str(REPORT_PATH))
@@ -77,6 +79,7 @@ def build_artifact_index(output_path: Path) -> list[list[str]]:
         ['Deployment manifest', str(DEPLOYMENT_MANIFEST_PATH)],
         ['Proposal scenario manifest', str(SCENARIO_MANIFEST_PATH)],
         ['Demo evidence manifest', str(EVIDENCE_MANIFEST_PATH)],
+        ['Funding state manifest', str(FUNDING_STATE_PATH)],
         ['Screenshot manifest', str(SCREENSHOT_MANIFEST_PATH)],
         ['Workbook summary', str(WORKBOOK_SUMMARY_PATH)],
         ['Final PDF report', str(output_path)],
@@ -185,7 +188,13 @@ def build_story(
 
 def main() -> None:
     args = parse_args()
-    manifests = load_required_manifests(Path(args.deployment_manifest), Path(args.scenario_manifest), Path(args.evidence_manifest), Path(args.screenshot_manifest))
+    manifests = load_required_manifests(
+        Path(args.deployment_manifest),
+        Path(args.scenario_manifest),
+        Path(args.evidence_manifest),
+        Path(args.funding_state_manifest),
+        Path(args.screenshot_manifest),
+    )
     workbook_summary = load_json(Path(args.workbook_summary))
     gas_report = load_gas_report()
     slither_summary = load_slither_summary()

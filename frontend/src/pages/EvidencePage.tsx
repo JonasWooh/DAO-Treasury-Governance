@@ -13,16 +13,61 @@ export function EvidencePage({ bundle }: EvidencePageProps) {
   return (
     <div className="page-grid single-column">
       <section className="panel panel-wide">
-        <h2>Evidence</h2>
+        <h2>Operational Record</h2>
         <p className="muted">
-          The evidence package is driven by the Sepolia deployment manifest, proposal scenario
-          manifest, demo evidence manifest, and screenshot manifest. Missing entries are treated as
-          build or validation failures rather than silently omitted.
+          Review the published artifacts behind this workspace, including contract addresses,
+          execution history, funding state, and archived media.
         </p>
       </section>
 
       <section className="panel panel-wide">
-        <h3>Contract Links</h3>
+        <h3>Network Snapshot</h3>
+        <div className="metrics-grid">
+          <div className="metric-card">
+            <span className="metric-label">Members</span>
+            <strong className="metric-value">{bundle.fundingState.members.length}</strong>
+          </div>
+          <div className="metric-card">
+            <span className="metric-label">Proposals</span>
+            <strong className="metric-value">{bundle.fundingState.proposals.length}</strong>
+          </div>
+          <div className="metric-card">
+            <span className="metric-label">Projects</span>
+            <strong className="metric-value">{bundle.fundingState.projects.length}</strong>
+          </div>
+          <div className="metric-card">
+            <span className="metric-label">Total Active Reputation</span>
+            <strong className="metric-value">{bundle.fundingState.reputationSummary.totalActiveReputation}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="panel panel-wide">
+        <h3>Member Standing</h3>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Registered</th>
+              <th>Active</th>
+              <th>Current Reputation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bundle.fundingState.members.map((member) => (
+              <tr key={member.account}>
+                <td><code>{formatAddress(member.account)}</code></td>
+                <td>{member.isRegistered ? 'yes' : 'no'}</td>
+                <td>{member.isActive ? 'yes' : 'no'}</td>
+                <td>{member.currentReputation}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="panel panel-wide">
+        <h3>Contract Registry</h3>
         <table className="data-table">
           <thead>
             <tr>
@@ -48,7 +93,7 @@ export function EvidencePage({ bundle }: EvidencePageProps) {
       </section>
 
       <section className="panel panel-wide">
-        <h3>Transaction Hash Table</h3>
+        <h3>Execution Log</h3>
         <table className="data-table">
           <thead>
             <tr>
@@ -76,7 +121,7 @@ export function EvidencePage({ bundle }: EvidencePageProps) {
       </section>
 
       <section className="panel panel-wide">
-        <h3>Screenshot Manifest</h3>
+        <h3>Media Checklist</h3>
         <div className="stack">
           {Object.entries(screenshotsBySection).map(([section, entries]) => (
             <div key={section}>

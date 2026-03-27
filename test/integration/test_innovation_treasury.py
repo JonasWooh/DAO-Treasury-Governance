@@ -24,6 +24,7 @@ class InnovationTreasuryTestCase(unittest.TestCase):
             "timelock": load_artifact(
                 "lib/openzeppelin-contracts/contracts/governance/TimelockController/TimelockController.json"
             ),
+            "mock_funding_registry": load_artifact("src/mocks/MockFundingRegistry/MockFundingRegistry.json"),
             "mock_weth": load_artifact("src/mocks/MockWETH/MockWETH.json"),
             "mock_chainlink": load_artifact("src/mocks/MockChainlinkAggregatorV3/MockChainlinkAggregatorV3.json"),
             "mock_pool": load_artifact("src/mocks/MockAavePool/MockAavePool.json"),
@@ -51,6 +52,7 @@ class InnovationTreasuryTestCase(unittest.TestCase):
             address=self.pool.functions.aToken().call(),
             abi=self.artifacts["mock_a_token"]["abi"],
         )
+        self.funding_registry = self._deploy("mock_funding_registry", [])
         self.chainlink = self._deploy("mock_chainlink", [])
         self.oracle = self._deploy("oracle", [self.chainlink.address, 3_600])
 
@@ -61,7 +63,7 @@ class InnovationTreasuryTestCase(unittest.TestCase):
         )
         self.treasury = self._deploy(
             "treasury",
-            [self.timelock.address, self.weth.address, self.oracle.address, self.adapter.address],
+            [self.timelock.address, self.weth.address, self.oracle.address, self.adapter.address, self.funding_registry.address],
         )
         self.assertEqual(self.treasury.address, predicted_treasury)
 
@@ -103,6 +105,75 @@ class InnovationTreasuryTestCase(unittest.TestCase):
     def _project(self, project_id: bytes):
         return self.treasury.functions.getProject(project_id).call()
 
+    def _prime_funding_registry_project(
+        self,
+        *,
+        project_id: bytes,
+        proposal_id: int,
+        recipient: str,
+        budget_weth: int,
+        milestone_count: int,
+        proposal_status: int = 2,
+        governor_proposal_id: int = 101,
+        released_weth: int = 0,
+        next_claimable_milestone: int = 0,
+        project_status: int = 0,
+    ) -> None:
+        project_hex = Web3.to_hex(project_id)
+        self._send(
+            self.funding_registry.functions.setProposal(
+                (
+                    proposal_id,
+                    self.deployer,
+                    recipient,
+                    "Mock proposal",
+                    "ipfs://mock-proposal",
+                    budget_weth,
+                    milestone_count,
+                    proposal_status,
+                    governor_proposal_id,
+                    project_hex,
+                )
+            )
+        )
+        self._send(
+            self.funding_registry.functions.setProject(
+                (
+                    project_hex,
+                    proposal_id,
+                    recipient,
+                    budget_weth,
+                    released_weth,
+                    next_claimable_milestone,
+                    project_status,
+                )
+            )
+        )
+
+    def _prime_funding_registry_milestone(
+        self,
+        *,
+        proposal_id: int,
+        milestone_index: int,
+        amount_weth: int,
+        state: int = 2,
+        evidence_uri: str = "ipfs://milestone",
+        claim_governor_proposal_id: int = 201,
+    ) -> None:
+        self._send(
+            self.funding_registry.functions.setMilestone(
+                proposal_id,
+                (
+                    milestone_index,
+                    f"Milestone {milestone_index}",
+                    amount_weth,
+                    evidence_uri,
+                    state,
+                    claim_governor_proposal_id,
+                ),
+            )
+        )
+
     def test_direct_eoa_calls_revert_for_state_changing_treasury_functions(self):
         project_id = Web3.keccak(text="SMART_RECYCLING_KIOSK")
 
@@ -122,6 +193,13 @@ class InnovationTreasuryTestCase(unittest.TestCase):
 
     def test_approve_project_records_state_and_emits_event(self):
         project_id = Web3.keccak(text="SMART_RECYCLING_KIOSK")
+        self._prime_funding_registry_project(
+            project_id=project_id,
+            proposal_id=1,
+            recipient=self.recipient,
+            budget_weth=WETH,
+            milestone_count=2,
+        )
         receipt = self._execute_via_timelock(
             self.treasury.functions.approveProject(project_id, self.recipient, WETH, 2)
         )
@@ -175,8 +253,26 @@ class InnovationTreasuryTestCase(unittest.TestCase):
             )
         )
 
+        self._prime_funding_registry_project(
+            project_id=project_id,
+            proposal_id=1,
+            recipient=self.recipient,
+            budget_weth=WETH,
+            milestone_count=2,
+        )
         self._execute_via_timelock(self.treasury.functions.approveProject(project_id, self.recipient, WETH, 2))
+        self._prime_funding_registry_milestone(proposal_id=1, milestone_index=0, amount_weth=WETH // 2)
         self._execute_via_timelock(self.treasury.functions.releaseMilestone(project_id, 0, WETH // 2))
+        self._prime_funding_registry_project(
+            project_id=project_id,
+            proposal_id=1,
+            recipient=self.recipient,
+            budget_weth=WETH,
+            milestone_count=2,
+            released_weth=WETH // 2,
+            next_claimable_milestone=1,
+        )
+        self._prime_funding_registry_milestone(proposal_id=1, milestone_index=1, amount_weth=WETH // 2)
         self._execute_via_timelock(self.treasury.functions.releaseMilestone(project_id, 1, WETH // 2))
 
         self._assert_reverts(
@@ -186,7 +282,15 @@ class InnovationTreasuryTestCase(unittest.TestCase):
         )
     def test_release_milestone_requires_strict_sequence_and_marks_completion(self):
         project_id = Web3.keccak(text="SEQUENTIAL_PROJECT")
+        self._prime_funding_registry_project(
+            project_id=project_id,
+            proposal_id=1,
+            recipient=self.recipient,
+            budget_weth=WETH,
+            milestone_count=2,
+        )
         self._execute_via_timelock(self.treasury.functions.approveProject(project_id, self.recipient, WETH, 2))
+        self._prime_funding_registry_milestone(proposal_id=1, milestone_index=0, amount_weth=WETH // 2)
 
         first_receipt = self._execute_via_timelock(
             self.treasury.functions.releaseMilestone(project_id, 0, WETH // 2)
@@ -203,6 +307,16 @@ class InnovationTreasuryTestCase(unittest.TestCase):
         self.assertEqual(project_after_first[4], 1)
         self.assertTrue(project_after_first[5])
 
+        self._prime_funding_registry_project(
+            project_id=project_id,
+            proposal_id=1,
+            recipient=self.recipient,
+            budget_weth=WETH,
+            milestone_count=2,
+            released_weth=WETH // 2,
+            next_claimable_milestone=1,
+        )
+        self._prime_funding_registry_milestone(proposal_id=1, milestone_index=1, amount_weth=WETH // 2)
         second_receipt = self._execute_via_timelock(
             self.treasury.functions.releaseMilestone(project_id, 1, WETH // 2)
         )
@@ -224,7 +338,15 @@ class InnovationTreasuryTestCase(unittest.TestCase):
 
     def test_release_milestone_reverts_for_wrong_index_budget_and_liquidity(self):
         project_id = Web3.keccak(text="INVALID_RELEASE")
+        self._prime_funding_registry_project(
+            project_id=project_id,
+            proposal_id=1,
+            recipient=self.recipient,
+            budget_weth=WETH,
+            milestone_count=2,
+        )
         self._execute_via_timelock(self.treasury.functions.approveProject(project_id, self.recipient, WETH, 2))
+        self._prime_funding_registry_milestone(proposal_id=1, milestone_index=0, amount_weth=WETH // 2)
 
         self._assert_reverts(
             lambda: self._execute_via_timelock(
@@ -236,16 +358,29 @@ class InnovationTreasuryTestCase(unittest.TestCase):
                 self.treasury.functions.releaseMilestone(project_id, 0, 0)
             )
         )
+        self._prime_funding_registry_milestone(proposal_id=1, milestone_index=0, amount_weth=WETH + 1)
         self._assert_reverts(
             lambda: self._execute_via_timelock(
                 self.treasury.functions.releaseMilestone(project_id, 0, WETH + 1)
             )
         )
 
-        self._execute_via_timelock(self.treasury.functions.depositIdleFunds(3 * WETH))
+        self._send(self.weth.functions.mint(self.treasury.address, 10 * WETH))
+        liquidity_project_id = Web3.keccak(text="LIQUIDITY_RELEASE")
+        self._execute_via_timelock(self.treasury.functions.setRiskPolicy(3_000, 10_000, 3_600))
+        self._prime_funding_registry_project(
+            project_id=liquidity_project_id,
+            proposal_id=2,
+            recipient=self.recipient,
+            budget_weth=6 * WETH,
+            milestone_count=1,
+        )
+        self._execute_via_timelock(self.treasury.functions.approveProject(liquidity_project_id, self.recipient, 6 * WETH, 1))
+        self._prime_funding_registry_milestone(proposal_id=2, milestone_index=0, amount_weth=6 * WETH)
+        self._execute_via_timelock(self.treasury.functions.depositIdleFunds(10 * WETH))
         self._assert_reverts(
             lambda: self._execute_via_timelock(
-                self.treasury.functions.releaseMilestone(project_id, 0, int(2.5 * WETH))
+                self.treasury.functions.releaseMilestone(liquidity_project_id, 0, 6 * WETH)
             )
         )
 

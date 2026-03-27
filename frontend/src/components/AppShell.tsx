@@ -1,26 +1,66 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
+import type { RuntimeBundle } from '../types';
+
 const NAV_ITEMS = [
   { to: '/', label: 'Overview' },
-  { to: '/proposals', label: 'Proposals' },
-  { to: '/treasury', label: 'Treasury & NAV' },
+  { to: '/proposals', label: 'Pipeline' },
+  { to: '/submit', label: 'Submit' },
+  { to: '/treasury', label: 'Treasury' },
   { to: '/evidence', label: 'Evidence' },
 ];
 
-export function AppShell() {
+interface AppShellProps {
+  bundle: RuntimeBundle;
+  runtimeNote?: string;
+}
+
+export function AppShell({ bundle, runtimeNote }: AppShellProps) {
+  const activeMembers = bundle.fundingState.members.filter((member) => member.isActive).length;
+  const activeProjects = bundle.fundingState.projects.length;
+  const proposalCount = bundle.fundingState.proposals.length;
+
   return (
     <div className="app-shell">
       <header className="hero">
-        <div className="hero-copy">
-          <span className="eyebrow">Industrial-Quality DAO Prototype on Sepolia</span>
-          <h1>Campus Innovation Fund DAO</h1>
-          <p>
-            A governance-first treasury demo that shows delegated voting, timelocked execution,
-            constrained grant release, Aave idle-fund management, and Chainlink-backed NAV
-            reporting.
-          </p>
+        <div className="hero-grid">
+          <div className="hero-copy">
+            <span className="eyebrow">Campus Innovation Fund</span>
+            <h1>Campus Innovation Fund DAO</h1>
+            <p>
+              A capital allocation workspace for funding review, milestone approvals, and treasury
+              oversight on Sepolia.
+            </p>
+            <div className="hero-tag-row" aria-label="Platform capabilities">
+              <span className="hero-tag">Hybrid voting</span>
+              <span className="hero-tag">Milestone releases</span>
+              <span className="hero-tag">Treasury controls</span>
+            </div>
+          </div>
+          <aside className="hero-aside" aria-label="Portfolio summary">
+            <article className="hero-stat">
+              <span className="hero-stat-label">Active members</span>
+              <strong className="hero-stat-value">{activeMembers}</strong>
+            </article>
+            <article className="hero-stat">
+              <span className="hero-stat-label">Funding requests</span>
+              <strong className="hero-stat-value">{proposalCount}</strong>
+            </article>
+            <article className="hero-stat">
+              <span className="hero-stat-label">Live projects</span>
+              <strong className="hero-stat-value">{activeProjects}</strong>
+            </article>
+          </aside>
         </div>
       </header>
+      {runtimeNote ? (
+        <section className="runtime-banner">
+          <div className="runtime-banner-card">
+            <span className="status status-warning">Preview mode</span>
+            <p className="muted runtime-banner-copy">{runtimeNote}</p>
+          </div>
+        </section>
+      ) : null}
       <nav className="top-nav" aria-label="Primary">
         {NAV_ITEMS.map((item) => (
           <NavLink

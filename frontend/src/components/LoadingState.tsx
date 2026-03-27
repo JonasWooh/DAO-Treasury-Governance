@@ -5,7 +5,7 @@ interface LoadingStateProps {
 
 export function LoadingState({ title, message }: LoadingStateProps) {
   return (
-    <section className="panel">
+    <section className="panel panel-centered">
       <h2>{title}</h2>
       <p className="muted">{message}</p>
     </section>

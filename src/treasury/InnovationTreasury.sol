@@ -8,6 +8,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import {IAaveWethAdapter} from "../interfaces/IAaveWethAdapter.sol";
+import {IFundingRegistry} from "../interfaces/IFundingRegistry.sol";
 import {IInnovationTreasury} from "../interfaces/IInnovationTreasury.sol";
 import {ITreasuryOracle} from "../interfaces/ITreasuryOracle.sol";
 import {TreasuryConstants} from "./TreasuryConstants.sol";
@@ -18,6 +19,7 @@ contract InnovationTreasury is IInnovationTreasury, Ownable, ReentrancyGuard {
     error InvalidWeth(address weth);
     error InvalidOracle(address oracle);
     error InvalidAaveAdapter(address aaveAdapter);
+    error InvalidFundingRegistry(address fundingRegistry);
     error OwnershipTransferDisabled();
     error InvalidProjectId(bytes32 projectId);
     error ProjectIdAlreadyUsed(bytes32 projectId);
@@ -40,6 +42,9 @@ contract InnovationTreasury is IInnovationTreasury, Ownable, ReentrancyGuard {
     error UnsupportedOracleDecimals(uint8 decimals);
     error AdapterSupplyMismatch(uint256 expectedDecreaseWeth, uint256 actualDecreaseWeth);
     error AdapterWithdrawMismatch(uint256 expectedIncreaseWeth, uint256 actualIncreaseWeth);
+    error FundingRegistryProjectMismatch(bytes32 projectId);
+    error FundingRegistryMilestoneMismatch(bytes32 projectId, uint8 milestoneIndex, uint256 amountWeth);
+    error FundingRegistryProjectStateInvalid(bytes32 projectId);
 
     event ProjectApproved(
         bytes32 indexed projectId,
@@ -62,6 +67,7 @@ contract InnovationTreasury is IInnovationTreasury, Ownable, ReentrancyGuard {
     IERC20 public immutable wethToken;
     ITreasuryOracle public immutable treasuryOracle;
     IAaveWethAdapter public immutable aaveWethAdapter;
+    IFundingRegistry public immutable fundingRegistry;
 
     mapping(bytes32 projectId => Project) private _projects;
     mapping(bytes32 projectId => bool) public projectIdUsed;
@@ -70,7 +76,9 @@ contract InnovationTreasury is IInnovationTreasury, Ownable, ReentrancyGuard {
     uint256 private _maxSingleGrantBps;
     uint256 private _stalePriceThreshold;
 
-    constructor(address timelock, address weth, address oracle, address aaveAdapter) Ownable(timelock) {
+    constructor(address timelock, address weth, address oracle, address aaveAdapter, address fundingRegistry_)
+        Ownable(timelock)
+    {
         if (weth == address(0)) {
             revert InvalidWeth(address(0));
         }
@@ -80,10 +88,14 @@ contract InnovationTreasury is IInnovationTreasury, Ownable, ReentrancyGuard {
         if (aaveAdapter == address(0)) {
             revert InvalidAaveAdapter(address(0));
         }
+        if (fundingRegistry_ == address(0)) {
+            revert InvalidFundingRegistry(address(0));
+        }
 
         wethToken = IERC20(weth);
         treasuryOracle = ITreasuryOracle(oracle);
         aaveWethAdapter = IAaveWethAdapter(aaveAdapter);
+        fundingRegistry = IFundingRegistry(fundingRegistry_);
 
         _minLiquidReserveBps = TreasuryConstants.DEFAULT_MIN_LIQUID_RESERVE_BPS;
         _maxSingleGrantBps = TreasuryConstants.DEFAULT_MAX_SINGLE_GRANT_BPS;
@@ -124,6 +136,30 @@ contract InnovationTreasury is IInnovationTreasury, Ownable, ReentrancyGuard {
             revert GrantBudgetExceedsLimit(maxBudgetWeth, allowedBudgetWeth);
         }
 
+        IFundingRegistry.Project memory fundingProject = fundingRegistry.getProject(projectId);
+        if (
+            fundingProject.projectId != projectId || fundingProject.recipient != recipient
+                || fundingProject.approvedBudgetWeth != maxBudgetWeth || fundingProject.sourceProposalId == 0
+        ) {
+            revert FundingRegistryProjectMismatch(projectId);
+        }
+        if (
+            fundingProject.status != IFundingRegistry.ProjectStatus.Active || fundingProject.releasedWeth != 0
+                || fundingProject.nextClaimableMilestone != 0
+        ) {
+            revert FundingRegistryProjectStateInvalid(projectId);
+        }
+
+        IFundingRegistry.Proposal memory fundingProposal = fundingRegistry.getProposal(fundingProject.sourceProposalId);
+        if (
+            fundingProposal.proposalId != fundingProject.sourceProposalId || fundingProposal.projectId != projectId
+                || fundingProposal.recipient != recipient || fundingProposal.requestedFundingWeth != maxBudgetWeth
+                || fundingProposal.milestoneCount != milestoneCount
+                || fundingProposal.status != IFundingRegistry.ProposalStatus.Approved
+        ) {
+            revert FundingRegistryProjectMismatch(projectId);
+        }
+
         _projects[projectId] = Project({
             recipient: recipient,
             maxBudgetWeth: maxBudgetWeth,
@@ -147,6 +183,30 @@ contract InnovationTreasury is IInnovationTreasury, Ownable, ReentrancyGuard {
         }
         if (amountWeth == 0) {
             revert InvalidMilestoneAmount(amountWeth);
+        }
+
+        IFundingRegistry.Project memory fundingProject = fundingRegistry.getProject(projectId);
+        if (
+            fundingProject.projectId != projectId || fundingProject.recipient != project.recipient
+                || fundingProject.approvedBudgetWeth != project.maxBudgetWeth
+                || fundingProject.releasedWeth != project.releasedWeth
+        ) {
+            revert FundingRegistryProjectMismatch(projectId);
+        }
+        if (
+            fundingProject.status != IFundingRegistry.ProjectStatus.Active
+                || fundingProject.nextClaimableMilestone != milestoneIndex
+        ) {
+            revert FundingRegistryProjectStateInvalid(projectId);
+        }
+
+        IFundingRegistry.Milestone memory fundingMilestone =
+            fundingRegistry.getMilestone(fundingProject.sourceProposalId, milestoneIndex);
+        if (
+            fundingMilestone.index != milestoneIndex || fundingMilestone.amountWeth != amountWeth
+                || fundingMilestone.state != IFundingRegistry.MilestoneState.ClaimSubmitted
+        ) {
+            revert FundingRegistryMilestoneMismatch(projectId, milestoneIndex, amountWeth);
         }
 
         uint256 newReleasedTotal = project.releasedWeth + amountWeth;

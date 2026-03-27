@@ -4,20 +4,22 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from web3 import Web3
-
 from sepolia_demo_common import (
     DEFAULT_DEPLOYMENT_MANIFEST,
     DEFAULT_EVIDENCE_MANIFEST,
+    DEFAULT_FUNDING_STATE_MANIFEST,
+    DEMO_BOOTSTRAP_DESCRIPTION,
     DEMO_TREASURY_FUNDING_WETH,
+    INITIAL_MEMBER_REPUTATION,
     INITIAL_VOTER_ALLOCATION,
-    PROJECT_ID,
     TOKEN_UNIT,
     ZERO_ADDRESS,
     TransactionSender,
     build_empty_evidence_manifest,
     connect_to_sepolia,
+    encode_call,
     env_default,
+    execute_governor_proposal,
     load_json,
     load_required_contracts,
     parse_account_from_key,
@@ -26,6 +28,7 @@ from sepolia_demo_common import (
     snapshot_votes,
     to_checksum_address,
     update_etherscan_links,
+    write_funding_state_manifest,
     write_json,
 )
 
@@ -35,15 +38,18 @@ DEFAULT_STALE_PRICE_THRESHOLD = 3600
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Seed the Sepolia demo state for Milestone 5.")
+    parser = argparse.ArgumentParser(description="Seed the Sepolia V2 demo state.")
     parser.add_argument("--rpc-url", default=env_default("SEPOLIA_RPC_URL"))
     parser.add_argument("--deployment-manifest", default=str(DEFAULT_DEPLOYMENT_MANIFEST))
     parser.add_argument("--evidence-output", default=str(DEFAULT_EVIDENCE_MANIFEST))
+    parser.add_argument("--funding-state-output", default=str(DEFAULT_FUNDING_STATE_MANIFEST))
     parser.add_argument("--project-recipient", default=env_default("CIF_PROJECT_RECIPIENT"))
     parser.add_argument("--funder-private-key", default=env_default("CIF_TREASURY_FUNDER_PRIVATE_KEY"))
     parser.add_argument("--voter-a-private-key", default=env_default("CIF_VOTER_A_PRIVATE_KEY"))
     parser.add_argument("--voter-b-private-key", default=env_default("CIF_VOTER_B_PRIVATE_KEY"))
     parser.add_argument("--voter-c-private-key", default=env_default("CIF_VOTER_C_PRIVATE_KEY"))
+    parser.add_argument("--poll-interval-seconds", type=float, default=6.0)
+    parser.add_argument("--timeout-seconds", type=float, default=1800.0)
     parser.add_argument(
         "--gas-price-wei",
         type=int,
@@ -75,16 +81,155 @@ def ensure_voter_configuration(
             )
 
 
+def persist_outputs(
+    deployment_manifest: dict[str, Any],
+    evidence_manifest: dict[str, Any],
+    evidence_output_path: Path,
+    funding_state_output_path: Path,
+    funding_registry,
+    reputation_registry,
+) -> None:
+    update_etherscan_links(deployment_manifest, evidence_manifest)
+    write_json(evidence_output_path, evidence_manifest)
+    write_funding_state_manifest(funding_state_output_path, deployment_manifest, funding_registry, reputation_registry)
+
+
+def member_snapshot(reputation_registry, voter_addresses: dict[str, str]) -> dict[str, Any]:
+    snapshot: dict[str, Any] = {}
+    for label, address in voter_addresses.items():
+        member = reputation_registry.functions.getMember(address).call()
+        snapshot[label] = {
+            "address": address,
+            "isRegistered": bool(member[0]),
+            "isActive": bool(member[1]),
+            "currentReputation": str(member[2]),
+        }
+    return snapshot
+
+
+def ensure_members_bootstrapped(
+    w3,
+    deployment_manifest: dict[str, Any],
+    evidence_manifest: dict[str, Any],
+    evidence_output_path: Path,
+    funding_state_output_path: Path,
+    voter_accounts: dict[str, Any],
+    voter_addresses: dict[str, str],
+    governor,
+    timelock,
+    funding_registry,
+    reputation_registry,
+    poll_interval_seconds: float,
+    timeout_seconds: float,
+    gas_price_wei: int | None,
+) -> None:
+    member_count = reputation_registry.functions.memberCount().call()
+    member_states = {
+        label: reputation_registry.functions.getMember(address).call()
+        for label, address in voter_addresses.items()
+    }
+    all_registered = all(bool(state[0]) and bool(state[1]) and int(state[2]) == INITIAL_MEMBER_REPUTATION for state in member_states.values())
+
+    bootstrap_record = evidence_manifest.setdefault("seedState", {}).setdefault(
+        "bootstrapMembers",
+        {
+            "description": DEMO_BOOTSTRAP_DESCRIPTION,
+            "initialReputation": str(INITIAL_MEMBER_REPUTATION),
+            "memberAddresses": voter_addresses,
+            "transactions": {
+                "propose": None,
+                "votes": {},
+                "queue": None,
+                "execute": None,
+            },
+            "snapshots": {},
+        },
+    )
+
+    def persist_callback() -> None:
+        persist_outputs(
+            deployment_manifest,
+            evidence_manifest,
+            evidence_output_path,
+            funding_state_output_path,
+            funding_registry,
+            reputation_registry,
+        )
+
+    if all_registered:
+        if member_count != len(voter_addresses):
+            raise RuntimeError(
+                f"Reputation registry member count drift detected: expected {len(voter_addresses)}, got {member_count}."
+            )
+    else:
+        if member_count != 0:
+            raise RuntimeError(
+                "Reputation registry is not in a clean bootstrap state. "
+                "Expected zero registered members before bootstrap proposal execution."
+            )
+
+        proposer_sender = TransactionSender(w3, voter_accounts["voterA"], gas_price_wei)
+        voter_senders = {
+            label: TransactionSender(w3, account, gas_price_wei)
+            for label, account in voter_accounts.items()
+        }
+        targets = [reputation_registry.address] * len(voter_addresses)
+        values = [0] * len(voter_addresses)
+        calldatas = [
+            encode_call(reputation_registry, "registerMember", address, INITIAL_MEMBER_REPUTATION)
+            for address in voter_addresses.values()
+        ]
+
+        execute_governor_proposal(
+            w3=w3,
+            governor=governor,
+            timelock=timelock,
+            proposer_sender=proposer_sender,
+            voter_senders=voter_senders,
+            proposal_record=bootstrap_record,
+            targets=targets,
+            values=values,
+            calldatas=calldatas,
+            description=DEMO_BOOTSTRAP_DESCRIPTION,
+            poll_interval_seconds=poll_interval_seconds,
+            timeout_seconds=timeout_seconds,
+            persist_callback=persist_callback,
+        )
+
+    member_count_after = reputation_registry.functions.memberCount().call()
+    total_active_reputation = reputation_registry.functions.totalActiveReputation().call()
+    if member_count_after != len(voter_addresses):
+        raise RuntimeError(
+            f"Bootstrap verification failed: expected {len(voter_addresses)} members, got {member_count_after}."
+        )
+    if total_active_reputation != len(voter_addresses) * INITIAL_MEMBER_REPUTATION:
+        raise RuntimeError(
+            "Bootstrap verification failed: total active reputation does not match the configured initial reputation."
+        )
+
+    bootstrap_record["snapshots"]["postExecution"] = {
+        "members": member_snapshot(reputation_registry, voter_addresses),
+        "memberCount": member_count_after,
+        "totalActiveReputation": str(total_active_reputation),
+    }
+
+
 def main() -> None:
     args = parse_args()
 
     w3 = connect_to_sepolia(require_value(args.rpc_url, "rpc-url or SEPOLIA_RPC_URL"))
     deployment_manifest_path = Path(args.deployment_manifest)
     evidence_output_path = Path(args.evidence_output)
+    funding_state_output_path = Path(args.funding_state_output)
 
     deployment_manifest = load_json(deployment_manifest_path)
     contracts = load_required_contracts(w3, deployment_manifest)
     token = contracts["token"]
+    reputation = contracts["reputation"]
+    hybrid_votes = contracts["hybridVotes"]
+    governor = contracts["governor"]
+    timelock = contracts["timelock"]
+    funding_registry = contracts["fundingRegistry"]
     treasury = contracts["treasury"]
     weth = contracts["weth"]
 
@@ -108,37 +253,24 @@ def main() -> None:
         evidence_output_path,
         default=build_empty_evidence_manifest(deployment_manifest, project_recipient),
     )
-    existing_project_recipient = evidence_manifest.get("project", {}).get("recipient")
-    if existing_project_recipient is not None:
-        existing_project_recipient = to_checksum_address(w3, existing_project_recipient, "existing project recipient")
-        if existing_project_recipient != project_recipient:
-            raise RuntimeError(
-                f"Evidence manifest already records project recipient {existing_project_recipient}, not {project_recipient}."
-            )
     evidence_manifest["contracts"] = deployment_manifest.get("contracts", {})
     evidence_manifest["participants"] = {
         "funder": funder_account.address,
         **voter_addresses,
     }
-    evidence_manifest["project"] = evidence_manifest.get("project") or {
-        "projectId": PROJECT_ID,
-        "recipient": project_recipient,
-    }
-    evidence_manifest["project"]["projectId"] = PROJECT_ID
+    evidence_manifest["project"] = evidence_manifest.get("project") or {}
+    evidence_manifest["project"]["name"] = evidence_manifest["project"].get("name") or "Smart Recycling Kiosk"
+    evidence_manifest["project"]["projectKey"] = evidence_manifest["project"].get("projectKey") or "SMART_RECYCLING_KIOSK"
     evidence_manifest["project"]["recipient"] = project_recipient
 
     funder_sender = TransactionSender(w3, funder_account, args.gas_price_wei)
 
     liquid_before = treasury.functions.liquidWethBalance().call()
     supplied_before = treasury.functions.suppliedWethBalance().call()
-    project_used = treasury.functions.projectIdUsed(Web3.to_bytes(hexstr=PROJECT_ID)).call()
-
     if supplied_before != 0:
         raise RuntimeError(
             f"Treasury already has supplied WETH ({supplied_before}). Seed state must be prepared before proposal execution."
         )
-    if project_used:
-        raise RuntimeError("Smart Recycling Kiosk project is already registered. Seed state must be prepared before proposal 1.")
     if liquid_before > DEMO_TREASURY_FUNDING_WETH:
         raise RuntimeError(
             f"Treasury already holds {liquid_before} WETH units, which exceeds the demo starting balance {DEMO_TREASURY_FUNDING_WETH}."
@@ -206,27 +338,54 @@ def main() -> None:
             f"got {(min_liquid_reserve_bps, max_single_grant_bps, stale_price_threshold)}."
         )
 
-    evidence_manifest["seedState"] = {
-        "fundTreasury": {
-            "transactionHash": fund_tx_hash,
-            "status": "funded" if fund_tx_hash is not None else "alreadyFunded",
-            "funder": funder_account.address,
-            "deltaWeth": str(treasury_top_up),
-            "targetTreasuryLiquidWeth": str(DEMO_TREASURY_FUNDING_WETH),
-        },
-        "selfDelegations": delegation_transactions,
-        "initialSnapshot": {
-            "treasury": snapshot_treasury_state(treasury),
-            "voters": snapshot_votes(token, voter_addresses),
-            "projectRecipientWeth": str(weth.functions.balanceOf(project_recipient).call()),
-            "blockNumber": w3.eth.block_number,
-            "chainTimestamp": w3.eth.get_block("latest")["timestamp"],
-        },
+    evidence_manifest["seedState"]["fundTreasury"] = {
+        "transactionHash": fund_tx_hash,
+        "status": "funded" if fund_tx_hash is not None else "alreadyFunded",
+        "funder": funder_account.address,
+        "deltaWeth": str(treasury_top_up),
+        "targetTreasuryLiquidWeth": str(DEMO_TREASURY_FUNDING_WETH),
+    }
+    evidence_manifest["seedState"]["selfDelegations"] = delegation_transactions
+
+    ensure_members_bootstrapped(
+        w3=w3,
+        deployment_manifest=deployment_manifest,
+        evidence_manifest=evidence_manifest,
+        evidence_output_path=evidence_output_path,
+        funding_state_output_path=funding_state_output_path,
+        voter_accounts=voter_accounts,
+        voter_addresses=voter_addresses,
+        governor=governor,
+        timelock=timelock,
+        funding_registry=funding_registry,
+        reputation_registry=reputation,
+        poll_interval_seconds=args.poll_interval_seconds,
+        timeout_seconds=args.timeout_seconds,
+        gas_price_wei=args.gas_price_wei,
+    )
+
+    evidence_manifest["seedState"]["initialSnapshot"] = {
+        "treasury": snapshot_treasury_state(treasury),
+        "voters": snapshot_votes(token, voter_addresses, hybrid_votes, reputation),
+        "projectRecipientWeth": str(weth.functions.balanceOf(project_recipient).call()),
+        "blockNumber": w3.eth.block_number,
+        "chainTimestamp": w3.eth.get_block("latest")["timestamp"],
+        "memberCount": reputation.functions.memberCount().call(),
+        "totalActiveReputation": str(reputation.functions.totalActiveReputation().call()),
+        "initialMemberReputation": str(INITIAL_MEMBER_REPUTATION),
+        "tokenUnit": str(TOKEN_UNIT),
     }
 
-    update_etherscan_links(deployment_manifest, evidence_manifest)
-    write_json(evidence_output_path, evidence_manifest)
+    persist_outputs(
+        deployment_manifest,
+        evidence_manifest,
+        evidence_output_path,
+        funding_state_output_path,
+        funding_registry,
+        reputation,
+    )
     print(f"Seed-state evidence written to {evidence_output_path}")
+    print(f"Funding state manifest written to {funding_state_output_path}")
 
 
 if __name__ == "__main__":

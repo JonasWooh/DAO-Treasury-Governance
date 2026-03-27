@@ -29,68 +29,57 @@ export function flattenEvidenceTransactions(
   const rows: EvidenceTransactionRow[] = [];
   const transactionLinks = evidence.etherscanLinks.transactions;
 
+  const appendRow = (section: string, step: string, txHash: string) => {
+    rows.push({
+      section,
+      step,
+      txHash,
+      url: transactionLinks[`${section === 'Seed State' ? 'seedState' : section}.${step}`] ?? `${etherscanBaseUrl}/tx/${txHash}`,
+    });
+  };
+
+  const walkTransactions = (section: string, prefix: string, value: unknown): void => {
+    if (!value) {
+      return;
+    }
+    if (typeof value === 'string' && value.startsWith('0x') && value.length === 66) {
+      appendRow(section, prefix, value);
+      return;
+    }
+    if (typeof value !== 'object') {
+      return;
+    }
+
+    const record = value as Record<string, unknown>;
+    if (
+      typeof record.transactionHash === 'string' &&
+      record.transactionHash.startsWith('0x') &&
+      record.transactionHash.length === 66
+    ) {
+      appendRow(section, prefix, record.transactionHash);
+      return;
+    }
+
+    for (const [key, child] of Object.entries(record)) {
+      const nextPrefix = prefix ? `${prefix}.${key}` : key;
+      walkTransactions(section, nextPrefix, child);
+    }
+  };
+
   const fundTreasuryHash = (evidence.seedState.fundTreasury as { transactionHash?: string } | undefined)?.transactionHash;
   if (fundTreasuryHash) {
-    rows.push({
-      section: 'Seed State',
-      step: 'fundTreasury',
-      txHash: fundTreasuryHash,
-      url: transactionLinks['seedState.fundTreasury'] ?? `${etherscanBaseUrl}/tx/${fundTreasuryHash}`,
-    });
+    appendRow('Seed State', 'fundTreasury', fundTreasuryHash);
   }
 
-  const selfDelegations = (evidence.seedState.selfDelegations as Record<string, { transactionHash?: string }> | undefined) ?? {};
-  for (const [label, record] of Object.entries(selfDelegations)) {
-    if (!record.transactionHash) {
-      continue;
-    }
-    rows.push({
-      section: 'Seed State',
-      step: `selfDelegate.${label}`,
-      txHash: record.transactionHash,
-      url:
-        transactionLinks[`seedState.selfDelegations.${label}`] ??
-        `${etherscanBaseUrl}/tx/${record.transactionHash}`,
-    });
-  }
+  walkTransactions('Seed State', 'selfDelegations', evidence.seedState.selfDelegations);
+  walkTransactions(
+    'Seed State',
+    'bootstrapMembers',
+    (evidence.seedState.bootstrapMembers as { transactions?: Record<string, unknown> } | undefined)?.transactions,
+  );
 
   for (const [proposalSlug, proposalRecord] of Object.entries(evidence.proposals)) {
-    const transactions = proposalRecord.transactions ?? {};
-    if (transactions.propose) {
-      rows.push({
-        section: proposalSlug,
-        step: 'propose',
-        txHash: transactions.propose,
-        url: transactionLinks[`${proposalSlug}.propose`] ?? `${etherscanBaseUrl}/tx/${transactions.propose}`,
-      });
-    }
-    for (const [label, txHash] of Object.entries(transactions.votes ?? {})) {
-      if (!txHash) {
-        continue;
-      }
-      rows.push({
-        section: proposalSlug,
-        step: `vote.${label}`,
-        txHash,
-        url: transactionLinks[`${proposalSlug}.vote.${label}`] ?? `${etherscanBaseUrl}/tx/${txHash}`,
-      });
-    }
-    if (transactions.queue) {
-      rows.push({
-        section: proposalSlug,
-        step: 'queue',
-        txHash: transactions.queue,
-        url: transactionLinks[`${proposalSlug}.queue`] ?? `${etherscanBaseUrl}/tx/${transactions.queue}`,
-      });
-    }
-    if (transactions.execute) {
-      rows.push({
-        section: proposalSlug,
-        step: 'execute',
-        txHash: transactions.execute,
-        url: transactionLinks[`${proposalSlug}.execute`] ?? `${etherscanBaseUrl}/tx/${transactions.execute}`,
-      });
-    }
+    walkTransactions(proposalSlug, '', proposalRecord.transactions);
   }
 
   return rows;

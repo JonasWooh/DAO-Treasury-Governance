@@ -5,6 +5,7 @@ import { mockRuntimeBundle } from '../testFixtures';
 import {
   assertConfiguredFrontendConfig,
   validateDeploymentManifest,
+  validateFundingStateManifest,
   validateProposalScenarioManifest,
   validateScreenshotManifest,
 } from './runtimeValidation';
@@ -20,6 +21,7 @@ describe('runtimeValidation', () => {
 
   it('accepts valid scenario and screenshot manifests', () => {
     expect(() => validateProposalScenarioManifest(mockRuntimeBundle.scenarios)).not.toThrow();
+    expect(() => validateFundingStateManifest(mockRuntimeBundle.fundingState)).not.toThrow();
     expect(() => validateScreenshotManifest(mockRuntimeBundle.screenshots)).not.toThrow();
   });
 });
@@ -29,6 +31,9 @@ describe('evidence helpers', () => {
     const rows = flattenEvidenceTransactions(mockRuntimeBundle.evidence, mockRuntimeBundle.config.etherscanBaseUrl);
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.some((row) => row.section === 'Seed State')).toBe(true);
+    expect(rows.some((row) => row.step === 'bootstrapMembers.execute')).toBe(true);
+    expect(rows.some((row) => row.step === 'settleFundingVoteParticipation')).toBe(true);
+    expect(rows.some((row) => row.step === 'settleMilestoneVoteParticipation')).toBe(true);
   });
 
   it('requires participant addresses', () => {

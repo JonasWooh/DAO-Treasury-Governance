@@ -1,0 +1,357 @@
+{
+  "contractName": "MockFundingRegistry",
+  "sourceName": "src/mocks/MockFundingRegistry.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "milestoneIndex",
+          "type": "uint8"
+        }
+      ],
+      "name": "getMilestone",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint8",
+              "name": "index",
+              "type": "uint8"
+            },
+            {
+              "internalType": "string",
+              "name": "description",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "evidenceURI",
+              "type": "string"
+            },
+            {
+              "internalType": "enum IFundingRegistry.MilestoneState",
+              "name": "state",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "claimGovernorProposalId",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IFundingRegistry.Milestone",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "projectId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getProject",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "projectId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "sourceProposalId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "approvedBudgetWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "releasedWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "nextClaimableMilestone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum IFundingRegistry.ProjectStatus",
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IFundingRegistry.Project",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getProposal",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "proposalId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "proposer",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "metadataURI",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "requestedFundingWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "milestoneCount",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum IFundingRegistry.ProposalStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "governorProposalId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "projectId",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct IFundingRegistry.Proposal",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint8",
+              "name": "index",
+              "type": "uint8"
+            },
+            {
+              "internalType": "string",
+              "name": "description",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "evidenceURI",
+              "type": "string"
+            },
+            {
+              "internalType": "enum IFundingRegistry.MilestoneState",
+              "name": "state",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "claimGovernorProposalId",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IFundingRegistry.Milestone",
+          "name": "milestone",
+          "type": "tuple"
+        }
+      ],
+      "name": "setMilestone",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "projectId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "sourceProposalId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "approvedBudgetWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "releasedWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "nextClaimableMilestone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum IFundingRegistry.ProjectStatus",
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IFundingRegistry.Project",
+          "name": "project",
+          "type": "tuple"
+        }
+      ],
+      "name": "setProject",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "proposalId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "proposer",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "metadataURI",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "requestedFundingWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "milestoneCount",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum IFundingRegistry.ProposalStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "governorProposalId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "projectId",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct IFundingRegistry.Proposal",
+          "name": "proposal",
+          "type": "tuple"
+        }
+      ],
+      "name": "setProposal",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "608060405234801561000f575f80fd5b50610e3e8061001d5f395ff3fe608060405234801561000f575f80fd5b5060043610610060575f3560e01c8063056da8df14610064578063198aaba41461008d578063358051b0146100a25780634b5f748a146100b557806381984d83146100d5578063c7f758a8146100e8575b5f80fd5b61007761007236600461067a565b610108565b604051610084919061070f565b60405180910390f35b6100a061009b36600461078a565b6102b2565b005b6100a06100b03660046107c9565b6102f3565b6100c86100c3366004610808565b610313565b604051610084919061081f565b6100a06100e3366004610888565b6103ea565b6100fb6100f6366004610808565b610405565b60405161008491906108ab565b610110610623565b5f83815260026020908152604080832060ff808716855290835292819020815160c081019092528054909316815260018301805491939284019161015390610973565b80601f016020809104026020016040519081016040528092919081815260200182805461017f90610973565b80156101ca5780601f106101a1576101008083540402835291602001916101ca565b820191905f5260205f20905b8154815290600101906020018083116101ad57829003601f168201915b50505050508152602001600282015481526020016003820180546101ed90610973565b80601f016020809104026020016040519081016040528092919081815260200182805461021990610973565b80156102645780601f1061023b57610100808354040283529160200191610264565b820191905f5260205f20905b81548152906001019060200180831161024757829003601f168201915b505050918352505060048281015460209092019160ff169081111561028b5761028b6106eb565b600481111561029c5761029c6106eb565b8152602001600582015481525050905092915050565b5f8281526002602090815260408220839290916102d1908401846109a5565b60ff16815260208101919091526040015f206102ed8282610b60565b50505050565b80355f908152602081905260409020819061030e8282610cea565b505050565b61034f6040805160e0810182525f80825260208201819052918101829052606081018290526080810182905260a081018290529060c082015290565b5f82815260016020818152604092839020835160e0810185528154815292810154918301919091526002808201546001600160a01b0316938301939093526003810154606083015260048101546080830152600581015460ff80821660a08501529293919260c085019261010090920416908111156103d0576103d06106eb565b60028111156103e1576103e16106eb565b90525092915050565b80355f908152600160205260409020819061030e8282610db6565b60408051610140810182525f808252602082018190529181018290526060808201819052608082015260a0810182905260c0810182905260e0810182905261010081018290526101208101919091525f82815260208181526040918290208251610140810184528154815260018201546001600160a01b03908116938201939093526002820154909216928201929092526003820180549192916060840191906104ae90610973565b80601f01602080910402602001604051908101604052809291908181526020018280546104da90610973565b80156105255780601f106104fc57610100808354040283529160200191610525565b820191905f5260205f20905b81548152906001019060200180831161050857829003601f168201915b5050505050815260200160048201805461053e90610973565b80601f016020809104026020016040519081016040528092919081815260200182805461056a90610973565b80156105b55780601f1061058c576101008083540402835291602001916105b5565b820191905f5260205f20905b81548152906001019060200180831161059857829003601f168201915b505050918352505060058201546020820152600682015460ff80821660408401526060909201916101009091041660048111156105f4576105f46106eb565b6004811115610605576106056106eb565b81526007820154602082015260089091015460409091015292915050565b6040518060c001604052805f60ff168152602001606081526020015f8152602001606081526020015f600481111561065d5761065d6106eb565b81526020015f81525090565b60ff81168114610677575f80fd5b50565b5f806040838503121561068b575f80fd5b82359150602083013561069d81610669565b809150509250929050565b5f81518084525f5b818110156106cc576020818501810151868301820152016106b0565b505f602082860101526020601f19601f83011685010191505092915050565b634e487b7160e01b5f52602160045260245ffd5b60058110610677576106776106eb565b6020815260ff82511660208201525f602083015160c0604084015261073760e08401826106a8565b9050604084015160608401526060840151601f1984830301608085015261075e82826106a8565b915050608084015161076f816106ff565b8060a08501525060a084015160c08401528091505092915050565b5f806040838503121561079b575f80fd5b82359150602083013567ffffffffffffffff8111156107b8575f80fd5b830160c0818603121561069d575f80fd5b5f602082840312156107d9575f80fd5b813567ffffffffffffffff8111156107ef575f80fd5b82016101408185031215610801575f80fd5b9392505050565b5f60208284031215610818575f80fd5b5035919050565b81518152602080830151908201526040808301516001600160a01b031690820152606080830151908201526080808301519082015260a08083015160ff169082015260c082015160e08201906003811061087b5761087b6106eb565b8060c08401525092915050565b5f60e08284031215610898575f80fd5b50919050565b6108a7816106ff565b9052565b60208152815160208201525f60208301516108d160408401826001600160a01b03169052565b5060408301516001600160a01b03811660608401525060608301516101408060808501526109036101608501836106a8565b91506080850151601f198584030160a086015261092083826106a8565b92505060a085015160c085015260c085015161094160e086018260ff169052565b5060e08501516101006109568187018361089e565b860151610120868101919091529095015193019290925250919050565b600181811c9082168061098757607f821691505b60208210810361089857634e487b7160e01b5f52602260045260245ffd5b5f602082840312156109b5575f80fd5b813561080181610669565b5f81356109cc81610669565b92915050565b5f808335601e198436030181126109e7575f80fd5b83018035915067ffffffffffffffff821115610a01575f80fd5b602001915036819003821315610a15575f80fd5b9250929050565b634e487b7160e01b5f52604160045260245ffd5b601f82111561030e57805f5260205f20601f840160051c81016020851015610a555750805b601f840160051c820191505b81811015610a74575f8155600101610a61565b5050505050565b67ffffffffffffffff831115610a9357610a93610a1c565b610aa783610aa18354610973565b83610a30565b5f601f841160018114610ad8575f8515610ac15750838201355b5f19600387901b1c1916600186901b178355610a74565b5f83815260208120601f198716915b82811015610b075786850135825560209485019460019092019101610ae7565b5086821015610b23575f1960f88860031b161c19848701351681555b505060018560011b0183555050505050565b5f8135600581106109cc575f80fd5b610b4d826106ff565b60ff1981541660ff831681178255505050565b8135610b6b81610669565b815460ff191660ff82161782555060018082016020610b8d60208601866109d2565b67ffffffffffffffff811115610ba557610ba5610a1c565b610bb981610bb38654610973565b86610a30565b5f601f821160018114610bea575f8315610bd35750838201355b5f19600385901b1c1916600184901b178655610c3e565b5f86815260208120601f198516915b82811015610c165786850135825593870193908901908701610bf9565b5084821015610c32575f1960f88660031b161c19848701351681555b505060018360011b0186555b5050505050505060408201356002820155610c5c60608301836109d2565b610c6a818360038601610a7b565b5050610c84610c7b60808401610b35565b60048301610b44565b60a082013560058201555050565b5f81356001600160a01b03811681146109cc575f80fd5b80546001600160a01b0319166001600160a01b0392909216919091179055565b610cd2826106ff565b805461ff00600884901b1661ff001990911617905550565b81358155610d06610cfd60208401610c92565b60018301610ca9565b610d1e610d1560408401610c92565b60028301610ca9565b610d2b60608301836109d2565b610d39818360038601610a7b565b5050610d4860808301836109d2565b610d56818360048601610a7b565b505060a0820135600582015560068101610d86610d7560c085016109c0565b825460ff191660ff91909116178255565b610d9b610d9560e08501610b35565b82610cc9565b50610100820135600782015561012082013560088201555050565b8135815560208201356001820155610dd3610d1560408401610c92565b60608201356003820155608082013560048201556005810160a0830135610df981610669565b815460ff191660ff82161782555060c083013560038110610e18575f80fd5b815461ff001916600882901b61ff00161782555050505056fea164736f6c6343000818000a",
+  "deployedBytecode": "608060405234801561000f575f80fd5b5060043610610060575f3560e01c8063056da8df14610064578063198aaba41461008d578063358051b0146100a25780634b5f748a146100b557806381984d83146100d5578063c7f758a8146100e8575b5f80fd5b61007761007236600461067a565b610108565b604051610084919061070f565b60405180910390f35b6100a061009b36600461078a565b6102b2565b005b6100a06100b03660046107c9565b6102f3565b6100c86100c3366004610808565b610313565b604051610084919061081f565b6100a06100e3366004610888565b6103ea565b6100fb6100f6366004610808565b610405565b60405161008491906108ab565b610110610623565b5f83815260026020908152604080832060ff808716855290835292819020815160c081019092528054909316815260018301805491939284019161015390610973565b80601f016020809104026020016040519081016040528092919081815260200182805461017f90610973565b80156101ca5780601f106101a1576101008083540402835291602001916101ca565b820191905f5260205f20905b8154815290600101906020018083116101ad57829003601f168201915b50505050508152602001600282015481526020016003820180546101ed90610973565b80601f016020809104026020016040519081016040528092919081815260200182805461021990610973565b80156102645780601f1061023b57610100808354040283529160200191610264565b820191905f5260205f20905b81548152906001019060200180831161024757829003601f168201915b505050918352505060048281015460209092019160ff169081111561028b5761028b6106eb565b600481111561029c5761029c6106eb565b8152602001600582015481525050905092915050565b5f8281526002602090815260408220839290916102d1908401846109a5565b60ff16815260208101919091526040015f206102ed8282610b60565b50505050565b80355f908152602081905260409020819061030e8282610cea565b505050565b61034f6040805160e0810182525f80825260208201819052918101829052606081018290526080810182905260a081018290529060c082015290565b5f82815260016020818152604092839020835160e0810185528154815292810154918301919091526002808201546001600160a01b0316938301939093526003810154606083015260048101546080830152600581015460ff80821660a08501529293919260c085019261010090920416908111156103d0576103d06106eb565b60028111156103e1576103e16106eb565b90525092915050565b80355f908152600160205260409020819061030e8282610db6565b60408051610140810182525f808252602082018190529181018290526060808201819052608082015260a0810182905260c0810182905260e0810182905261010081018290526101208101919091525f82815260208181526040918290208251610140810184528154815260018201546001600160a01b03908116938201939093526002820154909216928201929092526003820180549192916060840191906104ae90610973565b80601f01602080910402602001604051908101604052809291908181526020018280546104da90610973565b80156105255780601f106104fc57610100808354040283529160200191610525565b820191905f5260205f20905b81548152906001019060200180831161050857829003601f168201915b5050505050815260200160048201805461053e90610973565b80601f016020809104026020016040519081016040528092919081815260200182805461056a90610973565b80156105b55780601f1061058c576101008083540402835291602001916105b5565b820191905f5260205f20905b81548152906001019060200180831161059857829003601f168201915b505050918352505060058201546020820152600682015460ff80821660408401526060909201916101009091041660048111156105f4576105f46106eb565b6004811115610605576106056106eb565b81526007820154602082015260089091015460409091015292915050565b6040518060c001604052805f60ff168152602001606081526020015f8152602001606081526020015f600481111561065d5761065d6106eb565b81526020015f81525090565b60ff81168114610677575f80fd5b50565b5f806040838503121561068b575f80fd5b82359150602083013561069d81610669565b809150509250929050565b5f81518084525f5b818110156106cc576020818501810151868301820152016106b0565b505f602082860101526020601f19601f83011685010191505092915050565b634e487b7160e01b5f52602160045260245ffd5b60058110610677576106776106eb565b6020815260ff82511660208201525f602083015160c0604084015261073760e08401826106a8565b9050604084015160608401526060840151601f1984830301608085015261075e82826106a8565b915050608084015161076f816106ff565b8060a08501525060a084015160c08401528091505092915050565b5f806040838503121561079b575f80fd5b82359150602083013567ffffffffffffffff8111156107b8575f80fd5b830160c0818603121561069d575f80fd5b5f602082840312156107d9575f80fd5b813567ffffffffffffffff8111156107ef575f80fd5b82016101408185031215610801575f80fd5b9392505050565b5f60208284031215610818575f80fd5b5035919050565b81518152602080830151908201526040808301516001600160a01b031690820152606080830151908201526080808301519082015260a08083015160ff169082015260c082015160e08201906003811061087b5761087b6106eb565b8060c08401525092915050565b5f60e08284031215610898575f80fd5b50919050565b6108a7816106ff565b9052565b60208152815160208201525f60208301516108d160408401826001600160a01b03169052565b5060408301516001600160a01b03811660608401525060608301516101408060808501526109036101608501836106a8565b91506080850151601f198584030160a086015261092083826106a8565b92505060a085015160c085015260c085015161094160e086018260ff169052565b5060e08501516101006109568187018361089e565b860151610120868101919091529095015193019290925250919050565b600181811c9082168061098757607f821691505b60208210810361089857634e487b7160e01b5f52602260045260245ffd5b5f602082840312156109b5575f80fd5b813561080181610669565b5f81356109cc81610669565b92915050565b5f808335601e198436030181126109e7575f80fd5b83018035915067ffffffffffffffff821115610a01575f80fd5b602001915036819003821315610a15575f80fd5b9250929050565b634e487b7160e01b5f52604160045260245ffd5b601f82111561030e57805f5260205f20601f840160051c81016020851015610a555750805b601f840160051c820191505b81811015610a74575f8155600101610a61565b5050505050565b67ffffffffffffffff831115610a9357610a93610a1c565b610aa783610aa18354610973565b83610a30565b5f601f841160018114610ad8575f8515610ac15750838201355b5f19600387901b1c1916600186901b178355610a74565b5f83815260208120601f198716915b82811015610b075786850135825560209485019460019092019101610ae7565b5086821015610b23575f1960f88860031b161c19848701351681555b505060018560011b0183555050505050565b5f8135600581106109cc575f80fd5b610b4d826106ff565b60ff1981541660ff831681178255505050565b8135610b6b81610669565b815460ff191660ff82161782555060018082016020610b8d60208601866109d2565b67ffffffffffffffff811115610ba557610ba5610a1c565b610bb981610bb38654610973565b86610a30565b5f601f821160018114610bea575f8315610bd35750838201355b5f19600385901b1c1916600184901b178655610c3e565b5f86815260208120601f198516915b82811015610c165786850135825593870193908901908701610bf9565b5084821015610c32575f1960f88660031b161c19848701351681555b505060018360011b0186555b5050505050505060408201356002820155610c5c60608301836109d2565b610c6a818360038601610a7b565b5050610c84610c7b60808401610b35565b60048301610b44565b60a082013560058201555050565b5f81356001600160a01b03811681146109cc575f80fd5b80546001600160a01b0319166001600160a01b0392909216919091179055565b610cd2826106ff565b805461ff00600884901b1661ff001990911617905550565b81358155610d06610cfd60208401610c92565b60018301610ca9565b610d1e610d1560408401610c92565b60028301610ca9565b610d2b60608301836109d2565b610d39818360038601610a7b565b5050610d4860808301836109d2565b610d56818360048601610a7b565b505060a0820135600582015560068101610d86610d7560c085016109c0565b825460ff191660ff91909116178255565b610d9b610d9560e08501610b35565b82610cc9565b50610100820135600782015561012082013560088201555050565b8135815560208201356001820155610dd3610d1560408401610c92565b60608201356003820155608082013560048201556005810160a0830135610df981610669565b815460ff191660ff82161782555060c083013560038110610e18575f80fd5b815461ff001916600882901b61ff00161782555050505056fea164736f6c6343000818000a",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"milestoneIndex\",\"type\":\"uint8\"}],\"name\":\"getMilestone\",\"outputs\":[{\"components\":[{\"internalType\":\"uint8\",\"name\":\"index\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"amountWeth\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"evidenceURI\",\"type\":\"string\"},{\"internalType\":\"enum IFundingRegistry.MilestoneState\",\"name\":\"state\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"claimGovernorProposalId\",\"type\":\"uint256\"}],\"internalType\":\"struct IFundingRegistry.Milestone\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"projectId\",\"type\":\"bytes32\"}],\"name\":\"getProject\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"projectId\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"sourceProposalId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"approvedBudgetWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"releasedWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"nextClaimableMilestone\",\"type\":\"uint8\"},{\"internalType\":\"enum IFundingRegistry.ProjectStatus\",\"name\":\"status\",\"type\":\"uint8\"}],\"internalType\":\"struct IFundingRegistry.Project\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"}],\"name\":\"getProposal\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"title\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"metadataURI\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"requestedFundingWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"milestoneCount\",\"type\":\"uint8\"},{\"internalType\":\"enum IFundingRegistry.ProposalStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"governorProposalId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"projectId\",\"type\":\"bytes32\"}],\"internalType\":\"struct IFundingRegistry.Proposal\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint8\",\"name\":\"index\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"amountWeth\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"evidenceURI\",\"type\":\"string\"},{\"internalType\":\"enum IFundingRegistry.MilestoneState\",\"name\":\"state\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"claimGovernorProposalId\",\"type\":\"uint256\"}],\"internalType\":\"struct IFundingRegistry.Milestone\",\"name\":\"milestone\",\"type\":\"tuple\"}],\"name\":\"setMilestone\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"projectId\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"sourceProposalId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"approvedBudgetWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"releasedWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"nextClaimableMilestone\",\"type\":\"uint8\"},{\"internalType\":\"enum IFundingRegistry.ProjectStatus\",\"name\":\"status\",\"type\":\"uint8\"}],\"internalType\":\"struct IFundingRegistry.Project\",\"name\":\"project\",\"type\":\"tuple\"}],\"name\":\"setProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"title\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"metadataURI\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"requestedFundingWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"milestoneCount\",\"type\":\"uint8\"},{\"internalType\":\"enum IFundingRegistry.ProposalStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"governorProposalId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"projectId\",\"type\":\"bytes32\"}],\"internalType\":\"struct IFundingRegistry.Proposal\",\"name\":\"proposal\",\"type\":\"tuple\"}],\"name\":\"setProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/mocks/MockFundingRegistry.sol\":\"MockFundingRegistry\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/IFundingRegistry.sol\":{\"keccak256\":\"0x30652557bb8ed27051193a807d84a81578d30054ebf6481cc246087952e22416\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bc8fea57befd2901c288b56288fdf50e6ac6cd855d241cd55000bbcab4e0cf73\",\"dweb:/ipfs/QmdnTfScQEwVc7pdK1VcGs7rHvXwd63GdppcX79xmcPitP\"]},\"src/mocks/MockFundingRegistry.sol\":{\"keccak256\":\"0x6510a5915e1a45a7afb62df1f138715ddd41f82ec0ba5f43ebc845232d49a6b9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://147413533cca9dffe732a6a845e76e67f04a7706736c8cd088989daf1f4668da\",\"dweb:/ipfs/QmRPyPifYdDBfzWkFSZiGD6CxFawUQ8WKSNAdBs9Daz5pB\"]}},\"version\":1}"
+}

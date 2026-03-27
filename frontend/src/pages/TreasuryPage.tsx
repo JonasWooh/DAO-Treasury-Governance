@@ -3,138 +3,143 @@ import { useReadContract } from 'wagmi';
 import { MetricCard } from '../components/MetricCard';
 import { RuntimeErrorPanel } from '../components/RuntimeErrorPanel';
 import { contractAbis } from '../lib/abis';
-import { requireProjectDefinition } from '../lib/evidence';
-import { formatAddress, formatTokenAmount, formatUsd18 } from '../lib/formatters';
+import { formatAddress, formatDateTime, formatTokenAmount, formatUsd18 } from '../lib/formatters';
+import { projectStatusLabel } from '../lib/governance';
+import { isPreviewRuntime } from '../lib/runtimeMode';
 import type { RuntimeBundle } from '../types';
 
 interface TreasuryPageProps {
   bundle: RuntimeBundle;
 }
 
+type ProjectTuple = readonly [`0x${string}`, bigint, `0x${string}`, bigint, bigint, number, number];
+
 export function TreasuryPage({ bundle }: TreasuryPageProps) {
-  let project;
-  try {
-    project = requireProjectDefinition(bundle.scenarios);
-  } catch (error) {
+  const previewMode = isPreviewRuntime(bundle);
+  const treasuryAddress = bundle.config.contracts.InnovationTreasury;
+  const oracleAddress = bundle.config.contracts.TreasuryOracle;
+  const projectSnapshot = bundle.fundingState.projects[0];
+
+  if (!projectSnapshot) {
     return (
       <RuntimeErrorPanel
-        title="Treasury Manifest Error"
-        error={error instanceof Error ? error.message : 'Unknown treasury manifest error.'}
+        title="Funding State Error"
+        error="funding_state.sepolia.json does not contain any projects."
       />
     );
   }
-
-  const treasuryAddress = bundle.config.contracts.InnovationTreasury;
-  const oracleAddress = bundle.config.contracts.TreasuryOracle;
 
   const { data: liquidWeth, error: liquidError } = useReadContract({
     address: treasuryAddress as `0x${string}`,
     abi: contractAbis.InnovationTreasury,
     functionName: 'liquidWethBalance',
+    query: { enabled: !previewMode },
   });
   const { data: suppliedWeth, error: suppliedError } = useReadContract({
     address: treasuryAddress as `0x${string}`,
     abi: contractAbis.InnovationTreasury,
     functionName: 'suppliedWethBalance',
+    query: { enabled: !previewMode },
   });
   const { data: totalManagedWeth, error: totalError } = useReadContract({
     address: treasuryAddress as `0x${string}`,
     abi: contractAbis.InnovationTreasury,
     functionName: 'totalManagedWeth',
+    query: { enabled: !previewMode },
   });
   const { data: navUsd, error: navError } = useReadContract({
     address: treasuryAddress as `0x${string}`,
     abi: contractAbis.InnovationTreasury,
     functionName: 'navUsd',
+    query: { enabled: !previewMode },
   });
   const { data: riskPolicy, error: riskError } = useReadContract({
     address: treasuryAddress as `0x${string}`,
     abi: contractAbis.InnovationTreasury,
     functionName: 'riskPolicy',
+    query: { enabled: !previewMode },
   });
   const { data: latestEthUsd, error: oracleError } = useReadContract({
     address: oracleAddress as `0x${string}`,
     abi: contractAbis.TreasuryOracle,
     functionName: 'latestEthUsd',
+    query: { enabled: !previewMode },
   });
-  const { data: projectState, error: projectError } = useReadContract({
-    address: treasuryAddress as `0x${string}`,
-    abi: contractAbis.InnovationTreasury,
+  const { data: liveProject, error: projectError } = useReadContract({
+    address: bundle.config.contracts.FundingRegistry as `0x${string}`,
+    abi: contractAbis.FundingRegistry,
     functionName: 'getProject',
-    args: [project.projectId as `0x${string}`],
+    args: [projectSnapshot.projectId as `0x${string}`],
+    query: { enabled: !previewMode },
   });
 
-  const oracleTuple = latestEthUsd as readonly [bigint, bigint, number] | undefined;
   const riskPolicyTuple = riskPolicy as readonly [bigint, bigint, bigint] | undefined;
-  const projectTuple = projectState as readonly [string, bigint, bigint, number, number, boolean] | undefined;
-
-  const normalizedPrice = oracleTuple ? oracleTuple[0].toString() : null;
-  const oracleDecimals = oracleTuple ? Number(oracleTuple[2]) : null;
+  const oracleTuple = latestEthUsd as readonly [bigint, bigint, number] | undefined;
+  const projectTuple = liveProject as ProjectTuple | undefined;
+  const liquidWethValue = liquidWeth as bigint | undefined;
+  const suppliedWethValue = suppliedWeth as bigint | undefined;
+  const totalManagedValue = totalManagedWeth as bigint | undefined;
+  const navUsdValue = navUsd as bigint | undefined;
 
   return (
     <div className="page-grid">
       <section className="panel panel-wide">
-        <h2>Treasury & NAV</h2>
+        <h2>Treasury Dashboard</h2>
         <p className="muted">
-          These reads come directly from the deployed Treasury and Oracle wrappers. No off-chain
-          treasury math is substituted at runtime.
+          Monitor liquid reserves, deployed capital, market pricing, and the current project
+          allocation from one view.
         </p>
-        {liquidError ? <p className="inline-error">{liquidError.message}</p> : null}
-        {suppliedError ? <p className="inline-error">{suppliedError.message}</p> : null}
-        {totalError ? <p className="inline-error">{totalError.message}</p> : null}
-        {navError ? <p className="inline-error">{navError.message}</p> : null}
-        {riskError ? <p className="inline-error">{riskError.message}</p> : null}
-        {oracleError ? <p className="inline-error">{oracleError.message}</p> : null}
+        {!previewMode && liquidError ? <p className="inline-error">{liquidError.message}</p> : null}
+        {!previewMode && suppliedError ? <p className="inline-error">{suppliedError.message}</p> : null}
+        {!previewMode && totalError ? <p className="inline-error">{totalError.message}</p> : null}
+        {!previewMode && navError ? <p className="inline-error">{navError.message}</p> : null}
+        {!previewMode && riskError ? <p className="inline-error">{riskError.message}</p> : null}
+        {!previewMode && oracleError ? <p className="inline-error">{oracleError.message}</p> : null}
         <div className="metrics-grid">
-          <MetricCard label="Liquid WETH" value={liquidWeth ? `${formatTokenAmount(liquidWeth.toString())} WETH` : 'Loading...'} />
-          <MetricCard label="Aave-Supplied WETH" value={suppliedWeth ? `${formatTokenAmount(suppliedWeth.toString())} WETH` : 'Loading...'} />
-          <MetricCard label="Total Managed WETH" value={totalManagedWeth ? `${formatTokenAmount(totalManagedWeth.toString())} WETH` : 'Loading...'} />
-          <MetricCard label="Treasury NAV" value={navUsd ? formatUsd18(navUsd.toString()) : 'Loading...'} />
+          <MetricCard label="Liquid WETH" value={liquidWethValue ? `${formatTokenAmount(liquidWethValue)} WETH` : previewMode ? 'Preview' : 'Loading...'} />
+          <MetricCard label="Aave-Supplied WETH" value={suppliedWethValue ? `${formatTokenAmount(suppliedWethValue)} WETH` : previewMode ? 'Preview' : 'Loading...'} />
+          <MetricCard label="Total Managed WETH" value={totalManagedValue ? `${formatTokenAmount(totalManagedValue)} WETH` : previewMode ? 'Preview' : 'Loading...'} />
+          <MetricCard label="Treasury NAV" value={navUsdValue ? formatUsd18(navUsdValue) : previewMode ? 'Preview' : 'Loading...'} />
           <MetricCard
             label="Chainlink ETH / USD"
-            value={normalizedPrice && oracleDecimals !== null ? `$${formatTokenAmount(normalizedPrice, oracleDecimals, 2)}` : 'Loading...'}
-            helper={oracleTuple ? `Updated at unix ${oracleTuple[1].toString()}` : undefined}
+            value={oracleTuple ? `$${formatTokenAmount(oracleTuple[0], oracleTuple[2], 2)}` : previewMode ? 'Preview' : 'Loading...'}
+            helper={oracleTuple ? `Updated at ${formatDateTime(Number(oracleTuple[1]))}` : previewMode ? 'Available after live export' : undefined}
           />
           <MetricCard
             label="Risk Policy"
-            value={riskPolicyTuple ? `${riskPolicyTuple[0].toString()} / ${riskPolicyTuple[1].toString()} / ${riskPolicyTuple[2].toString()}` : 'Loading...'}
-            helper="min reserve bps / max grant bps / stale threshold"
+            value={riskPolicyTuple ? `${riskPolicyTuple[0]} / ${riskPolicyTuple[1]} / ${riskPolicyTuple[2]}` : previewMode ? 'Preview' : 'Loading...'}
+            helper="reserve floor / grant cap / oracle freshness"
           />
         </div>
       </section>
 
       <section className="panel panel-wide">
-        <h2>Approved Project</h2>
-        {projectError ? <p className="inline-error">{projectError.message}</p> : null}
+        <h2>Active Project Allocation</h2>
+        {!previewMode && projectError ? <p className="inline-error">{projectError.message}</p> : null}
         <div className="project-grid">
           <div className="address-block">
-            <span className="wallet-label">Project</span>
-            <strong>{project.name}</strong>
-            <span className="muted">{project.projectKey}</span>
+            <span className="wallet-label">Project ID</span>
+            <code>{projectSnapshot.projectId}</code>
           </div>
           <div className="address-block">
             <span className="wallet-label">Recipient</span>
-            <code>{formatAddress(project.recipient)}</code>
+            <code>{formatAddress(projectTuple?.[2] ?? projectSnapshot.recipient)}</code>
           </div>
           <div className="address-block">
-            <span className="wallet-label">Project ID</span>
-            <code>{project.projectId}</code>
+            <span className="wallet-label">Approved Budget</span>
+            <span>{formatTokenAmount(projectTuple?.[3] ?? projectSnapshot.approvedBudgetWeth)} WETH</span>
           </div>
           <div className="address-block">
-            <span className="wallet-label">Budget</span>
-            <span>{projectTuple ? `${formatTokenAmount(projectTuple[1].toString())} WETH` : 'Loading...'}</span>
+            <span className="wallet-label">Released Amount</span>
+            <span>{formatTokenAmount(projectTuple?.[4] ?? projectSnapshot.releasedWeth)} WETH</span>
           </div>
           <div className="address-block">
-            <span className="wallet-label">Released</span>
-            <span>{projectTuple ? `${formatTokenAmount(projectTuple[2].toString())} WETH` : 'Loading...'}</span>
+            <span className="wallet-label">Next Claimable Milestone</span>
+            <span>{(projectTuple?.[5] ?? projectSnapshot.nextClaimableMilestone).toString()}</span>
           </div>
           <div className="address-block">
-            <span className="wallet-label">Milestones</span>
-            <span>
-              {projectTuple
-                ? `${projectTuple[4].toString()} / ${projectTuple[3].toString()} released (${projectTuple[5] ? 'active' : 'closed'})`
-                : 'Loading...'}
-            </span>
+            <span className="wallet-label">Project Status</span>
+            <span>{projectStatusLabel(Number(projectTuple?.[6] ?? 0))}</span>
           </div>
         </div>
       </section>

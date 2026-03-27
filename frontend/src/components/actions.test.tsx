@@ -1,9 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProposalCard } from './ProposalCard';
 import { WalletPanel } from './WalletPanel';
+import { ProposalDetailPage } from '../pages/ProposalDetailPage';
+import { SubmitProposalPage } from '../pages/SubmitProposalPage';
+import { MilestoneClaimPage } from '../pages/MilestoneClaimPage';
 import { mockAddresses, mockRuntimeBundle } from '../testFixtures';
 
 const mockWriteContract = vi.fn();
@@ -41,6 +44,22 @@ vi.mock('wagmi', () => ({
     const map: Record<string, unknown> = {
       state: 1n,
       proposalVotes: [0n, 600000000000000000000000n, 0n],
+      getProposal: [
+        1n,
+        mockRuntimeBundle.fundingState.proposals[0].proposer,
+        mockRuntimeBundle.fundingState.proposals[0].recipient,
+        mockRuntimeBundle.fundingState.proposals[0].title,
+        mockRuntimeBundle.fundingState.proposals[0].metadataURI,
+        200000000000000000n,
+        2,
+        2,
+        101n,
+        mockRuntimeBundle.fundingState.proposals[0].projectId,
+      ],
+      getMilestone: [0, 'Install robotics hardware', 100000000000000000n, 'ipfs://milestone-0', 4, 103n],
+      getMember: [true, true, 108n],
+      getVotes: 200000000000000000000000n,
+      hasVoted: false,
     };
     return { data: map[functionName], error: null };
   },
@@ -62,7 +81,7 @@ describe('WalletPanel actions', () => {
 
   it('wires self-delegation to the token contract', () => {
     renderWithQuery(<WalletPanel tokenAddress={mockAddresses.token} expectedChainId={11155111} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Self-Delegate CIF' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delegate Votes' }));
     expect(mockWriteContract).toHaveBeenCalledWith(expect.objectContaining({
       functionName: 'delegate',
       address: mockAddresses.token,
@@ -73,29 +92,54 @@ describe('WalletPanel actions', () => {
     wagmiState.chainId = 1;
     renderWithQuery(<WalletPanel tokenAddress={mockAddresses.token} expectedChainId={11155111} />);
     expect(screen.getByText(/not on Sepolia/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Self-Delegate CIF' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Delegate Votes' })).toBeDisabled();
   });
 });
 
-describe('ProposalCard vote action', () => {
+describe('Funding workflow write actions', () => {
   beforeEach(() => {
     mockWriteContract.mockReset();
     wagmiState.chainId = 11155111;
     wagmiState.isConnected = true;
   });
 
-  it('wires Vote For to castVote', () => {
+  it('wires vote action from proposal detail', () => {
     renderWithQuery(
-      <ProposalCard
-        governorAddress={mockAddresses.governor}
-        proposal={mockRuntimeBundle.scenarios.proposals[0]}
-        expectedChainId={11155111}
-      />, 
+      <MemoryRouter initialEntries={['/proposals/1']}>
+        <Routes>
+          <Route path="/proposals/:proposalId" element={<ProposalDetailPage bundle={mockRuntimeBundle} />} />
+        </Routes>
+      </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Vote For' }));
     expect(mockWriteContract).toHaveBeenCalledWith(expect.objectContaining({
       functionName: 'castVote',
       address: mockAddresses.governor,
+      args: [101n, 1],
+    }));
+  });
+
+  it('wires submitProposal to FundingRegistry', () => {
+    renderWithQuery(<SubmitProposalPage bundle={mockRuntimeBundle} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Proposal' }));
+    expect(mockWriteContract).toHaveBeenCalledWith(expect.objectContaining({
+      functionName: 'submitProposal',
+      address: mockAddresses.funding,
+    }));
+  });
+
+  it('wires submitMilestoneClaim to FundingRegistry', () => {
+    renderWithQuery(
+      <MemoryRouter initialEntries={['/claims/1/1']}>
+        <Routes>
+          <Route path="/claims/:proposalId/:milestoneIndex" element={<MilestoneClaimPage bundle={mockRuntimeBundle} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Claim' }));
+    expect(mockWriteContract).toHaveBeenCalledWith(expect.objectContaining({
+      functionName: 'submitMilestoneClaim',
+      address: mockAddresses.funding,
     }));
   });
 });

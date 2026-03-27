@@ -1,111 +1,127 @@
 import { useReadContract } from 'wagmi';
 
 import { MetricCard } from '../components/MetricCard';
-import { RuntimeErrorPanel } from '../components/RuntimeErrorPanel';
 import { WalletPanel } from '../components/WalletPanel';
-import { formatAddress, formatTokenAmount, formatUsd18 } from '../lib/formatters';
-import { requireParticipantAddress } from '../lib/evidence';
 import { contractAbis } from '../lib/abis';
-import type { RuntimeBundle } from '../types';
+import { formatAddress, formatTokenAmount, formatUsd18 } from '../lib/formatters';
+import { isPreviewRuntime } from '../lib/runtimeMode';
+import type { Member, RuntimeBundle } from '../types';
 
 interface OverviewPageProps {
   bundle: RuntimeBundle;
 }
 
+type MemberTuple = readonly [boolean, boolean, bigint];
+
+function MemberLiveRow({
+  member,
+  reputationRegistryAddress,
+  hybridVotesAddress,
+  previewMode,
+}: {
+  member: Member;
+  reputationRegistryAddress: string;
+  hybridVotesAddress: string;
+  previewMode: boolean;
+}) {
+  const { data: memberData } = useReadContract({
+    address: reputationRegistryAddress as `0x${string}`,
+    abi: contractAbis.ReputationRegistry,
+    functionName: 'getMember',
+    args: [member.account],
+    query: { enabled: !previewMode },
+  });
+  const { data: hybridVotes } = useReadContract({
+    address: hybridVotesAddress as `0x${string}`,
+    abi: contractAbis.HybridVotesAdapter,
+    functionName: 'getVotes',
+    args: [member.account],
+    query: { enabled: !previewMode },
+  });
+
+  const liveMember = memberData as MemberTuple | undefined;
+  const liveHybridVotes = hybridVotes as bigint | undefined;
+
+  return (
+    <div className="address-block">
+      <span className="wallet-label">{formatAddress(member.account)}</span>
+      <code>{member.account}</code>
+      <span className="muted">
+        {previewMode
+          ? `${member.isActive ? 'active' : 'inactive'} / reputation ${member.currentReputation} / hybrid snapshot`
+          : liveMember
+          ? `${liveMember[1] ? 'active' : 'inactive'} / reputation ${liveMember[2].toString()} / hybrid ${formatTokenAmount(liveHybridVotes ?? 0n)}`
+          : 'Loading member state...'}
+      </span>
+    </div>
+  );
+}
+
 export function OverviewPage({ bundle }: OverviewPageProps) {
-  let voterA: string;
-  let voterB: string;
-  let voterC: string;
-
-  try {
-    voterA = requireParticipantAddress(bundle.evidence, 'voterA');
-    voterB = requireParticipantAddress(bundle.evidence, 'voterB');
-    voterC = requireParticipantAddress(bundle.evidence, 'voterC');
-  } catch (error) {
-    return (
-      <RuntimeErrorPanel
-        title="Overview Manifest Error"
-        error={error instanceof Error ? error.message : 'Unknown participant manifest error.'}
-      />
-    );
-  }
-
+  const previewMode = isPreviewRuntime(bundle);
   const treasuryAddress = bundle.config.contracts.InnovationTreasury;
   const tokenAddress = bundle.config.contracts.CampusInnovationFundToken;
 
-  const { data: liquidWeth, error: liquidError } = useReadContract({
+  const { data: liquidWeth } = useReadContract({
     address: treasuryAddress as `0x${string}`,
     abi: contractAbis.InnovationTreasury,
     functionName: 'liquidWethBalance',
+    query: { enabled: !previewMode },
   });
-  const { data: totalManagedWeth, error: totalManagedError } = useReadContract({
+  const { data: totalManagedWeth } = useReadContract({
     address: treasuryAddress as `0x${string}`,
     abi: contractAbis.InnovationTreasury,
     functionName: 'totalManagedWeth',
+    query: { enabled: !previewMode },
   });
-  const { data: navUsd, error: navError } = useReadContract({
+  const { data: navUsd } = useReadContract({
     address: treasuryAddress as `0x${string}`,
     abi: contractAbis.InnovationTreasury,
     functionName: 'navUsd',
+    query: { enabled: !previewMode },
   });
-  const { data: totalSupply, error: supplyError } = useReadContract({
+  const { data: totalSupply } = useReadContract({
     address: tokenAddress as `0x${string}`,
     abi: contractAbis.CampusInnovationFundToken,
     functionName: 'totalSupply',
+    query: { enabled: !previewMode },
   });
-  const { data: voterAVotes } = useReadContract({
-    address: tokenAddress as `0x${string}`,
-    abi: contractAbis.CampusInnovationFundToken,
-    functionName: 'getVotes',
-    args: [voterA],
-  });
-  const { data: voterBVotes } = useReadContract({
-    address: tokenAddress as `0x${string}`,
-    abi: contractAbis.CampusInnovationFundToken,
-    functionName: 'getVotes',
-    args: [voterB],
-  });
-  const { data: voterCVotes } = useReadContract({
-    address: tokenAddress as `0x${string}`,
-    abi: contractAbis.CampusInnovationFundToken,
-    functionName: 'getVotes',
-    args: [voterC],
-  });
+
+  const liquidWethValue = liquidWeth as bigint | undefined;
+  const totalManagedValue = totalManagedWeth as bigint | undefined;
+  const navUsdValue = navUsd as bigint | undefined;
+  const totalSupplyValue = totalSupply as bigint | undefined;
+
+  const activeMembers = bundle.fundingState.members.filter((member) => member.isActive).length;
 
   return (
     <div className="page-grid">
       <section className="panel panel-wide">
         <div className="panel-header">
           <div>
-            <h2>DAO Overview</h2>
+            <h2>Fund Overview</h2>
             <p className="muted">
-              This interface surfaces the fixed Sepolia demo path defined in the implementation
-              plan: constrained treasury, timelocked governance, Chainlink NAV, and Aave idle-fund
-              management.
+              Track treasury health, active governance participation, and the current funding
+              pipeline from a single operating view.
             </p>
           </div>
         </div>
-        {liquidError ? <p className="inline-error">{liquidError.message}</p> : null}
-        {totalManagedError ? <p className="inline-error">{totalManagedError.message}</p> : null}
-        {navError ? <p className="inline-error">{navError.message}</p> : null}
-        {supplyError ? <p className="inline-error">{supplyError.message}</p> : null}
         <div className="metrics-grid">
           <MetricCard
-            label="Treasury Liquid WETH"
-            value={liquidWeth ? `${formatTokenAmount(liquidWeth.toString())} WETH` : 'Loading...'}
+            label="Liquid Treasury"
+            value={liquidWethValue ? `${formatTokenAmount(liquidWethValue)} WETH` : previewMode ? 'Preview' : 'Loading...'}
           />
           <MetricCard
-            label="Treasury Total Managed"
-            value={totalManagedWeth ? `${formatTokenAmount(totalManagedWeth.toString())} WETH` : 'Loading...'}
+            label="Total Managed"
+            value={totalManagedValue ? `${formatTokenAmount(totalManagedValue)} WETH` : previewMode ? 'Preview' : 'Loading...'}
           />
+          <MetricCard label="Net Asset Value" value={navUsdValue ? formatUsd18(navUsdValue) : previewMode ? 'Preview' : 'Loading...'} />
           <MetricCard
-            label="Treasury NAV"
-            value={navUsd ? formatUsd18(navUsd.toString()) : 'Loading...'}
+            label="Token Supply"
+            value={totalSupplyValue ? `${formatTokenAmount(totalSupplyValue)} CIF` : previewMode ? 'Preview' : 'Loading...'}
           />
-          <MetricCard
-            label="CIF Total Supply"
-            value={totalSupply ? `${formatTokenAmount(totalSupply.toString())} CIF` : 'Loading...'}
-          />
+          <MetricCard label="Funding Requests" value={bundle.fundingState.proposals.length.toString()} />
+          <MetricCard label="Active Members" value={activeMembers.toString()} />
         </div>
       </section>
 
@@ -115,28 +131,22 @@ export function OverviewPage({ bundle }: OverviewPageProps) {
       />
 
       <section className="panel">
-        <h2>Voting Members</h2>
+        <h2>Member Directory</h2>
         <div className="stack compact-stack">
-          <div className="address-block">
-            <span className="wallet-label">voterA</span>
-            <code>{formatAddress(voterA)}</code>
-            <span className="muted">{voterAVotes ? `${formatTokenAmount(voterAVotes.toString())} votes` : 'Loading votes...'}</span>
-          </div>
-          <div className="address-block">
-            <span className="wallet-label">voterB</span>
-            <code>{formatAddress(voterB)}</code>
-            <span className="muted">{voterBVotes ? `${formatTokenAmount(voterBVotes.toString())} votes` : 'Loading votes...'}</span>
-          </div>
-          <div className="address-block">
-            <span className="wallet-label">voterC</span>
-            <code>{formatAddress(voterC)}</code>
-            <span className="muted">{voterCVotes ? `${formatTokenAmount(voterCVotes.toString())} votes` : 'Loading votes...'}</span>
-          </div>
+          {bundle.fundingState.members.map((member) => (
+            <MemberLiveRow
+              key={member.account}
+              member={member}
+              reputationRegistryAddress={bundle.config.contracts.ReputationRegistry}
+              hybridVotesAddress={bundle.config.contracts.HybridVotesAdapter}
+              previewMode={previewMode}
+            />
+          ))}
         </div>
       </section>
 
       <section className="panel">
-        <h2>Deployment Surface</h2>
+        <h2>Contract Registry</h2>
         <ul className="mono-list compact-list">
           {Object.entries(bundle.deployments.contracts).map(([name, address]) => (
             <li key={name}>

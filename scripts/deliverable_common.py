@@ -18,6 +18,7 @@ ANALYSIS_DIR = ROOT / 'analysis'
 DEPLOYMENT_MANIFEST_PATH = DEPLOYMENTS_DIR / 'deployments.sepolia.json'
 SCENARIO_MANIFEST_PATH = DEPLOYMENTS_DIR / 'proposal_scenarios.sepolia.json'
 EVIDENCE_MANIFEST_PATH = DEPLOYMENTS_DIR / 'demo_evidence.sepolia.json'
+FUNDING_STATE_PATH = DEPLOYMENTS_DIR / 'funding_state.sepolia.json'
 SCREENSHOT_MANIFEST_PATH = EVIDENCE_DIR / 'screenshot-manifest.sepolia.json'
 WORKBOOK_PATH = EXCEL_DIR / 'treasury_analysis.sepolia.xlsx'
 WORKBOOK_SUMMARY_PATH = EXCEL_DIR / 'treasury_analysis.sepolia.summary.json'
@@ -30,7 +31,10 @@ SEPOLIA_ETHERSCAN_BASE_URL = 'https://sepolia.etherscan.io'
 
 REQUIRED_CONTRACT_NAMES = [
     'CampusInnovationFundToken',
+    'ReputationRegistry',
+    'HybridVotesAdapter',
     'InnovationGovernor',
+    'FundingRegistry',
     'TimelockController',
     'InnovationTreasury',
     'TreasuryOracle',
@@ -46,7 +50,10 @@ REQUIRED_EXTERNAL_PROTOCOL_NAMES = [
 
 FRONTEND_ABI_ARTIFACTS = {
     'CampusInnovationFundToken': ROOT / 'artifacts' / 'src' / 'governance' / 'CampusInnovationFundToken' / 'CampusInnovationFundToken.json',
+    'ReputationRegistry': ROOT / 'artifacts' / 'src' / 'governance' / 'ReputationRegistry' / 'ReputationRegistry.json',
+    'HybridVotesAdapter': ROOT / 'artifacts' / 'src' / 'governance' / 'HybridVotesAdapter' / 'HybridVotesAdapter.json',
     'InnovationGovernor': ROOT / 'artifacts' / 'src' / 'governance' / 'InnovationGovernor' / 'InnovationGovernor.json',
+    'FundingRegistry': ROOT / 'artifacts' / 'src' / 'funding' / 'FundingRegistry' / 'FundingRegistry.json',
     'InnovationTreasury': ROOT / 'artifacts' / 'src' / 'treasury' / 'InnovationTreasury' / 'InnovationTreasury.json',
     'TreasuryOracle': ROOT / 'artifacts' / 'src' / 'oracle' / 'TreasuryOracle' / 'TreasuryOracle.json',
     'AaveWethAdapter': ROOT / 'artifacts' / 'src' / 'adapters' / 'AaveWethAdapter' / 'AaveWethAdapter.json',
@@ -128,6 +135,18 @@ def validate_evidence_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     return manifest
 
 
+def validate_funding_state_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
+    validate_sepolia_network(manifest, 'funding state manifest')
+    require_object(manifest.get('contracts'), 'funding state manifest.contracts')
+    if not isinstance(manifest.get('generatedAt'), str) or manifest['generatedAt'] == '':
+        raise ValueError('funding state manifest.generatedAt must be a non-empty string')
+    for key in ('members', 'proposals', 'projects', 'milestones'):
+        if not isinstance(manifest.get(key), list):
+            raise ValueError(f'funding state manifest.{key} must be a list')
+    require_object(manifest.get('reputationSummary'), 'funding state manifest.reputationSummary')
+    return manifest
+
+
 def validate_screenshot_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     validate_sepolia_network(manifest, 'screenshot manifest')
     screenshots = manifest.get('screenshots')
@@ -147,16 +166,19 @@ def load_required_manifests(
     deployment_path: Path = DEPLOYMENT_MANIFEST_PATH,
     scenario_path: Path = SCENARIO_MANIFEST_PATH,
     evidence_path: Path = EVIDENCE_MANIFEST_PATH,
+    funding_state_path: Path = FUNDING_STATE_PATH,
     screenshot_path: Path = SCREENSHOT_MANIFEST_PATH,
 ) -> dict[str, dict[str, Any]]:
     deployment_manifest = validate_deployment_manifest(load_json(deployment_path))
     scenario_manifest = validate_scenario_manifest(load_json(scenario_path))
     evidence_manifest = validate_evidence_manifest(load_json(evidence_path))
+    funding_state_manifest = validate_funding_state_manifest(load_json(funding_state_path))
     screenshot_manifest = validate_screenshot_manifest(load_json(screenshot_path))
     return {
         'deployment': deployment_manifest,
         'scenario': scenario_manifest,
         'evidence': evidence_manifest,
+        'funding_state': funding_state_manifest,
         'screenshot': screenshot_manifest,
     }
 
@@ -177,6 +199,7 @@ def export_frontend_config_payload(deployment_manifest: dict[str, Any]) -> dict[
             'deployments': '/runtime/deployments.sepolia.json',
             'proposalScenarios': '/runtime/proposal_scenarios.sepolia.json',
             'demoEvidence': '/runtime/demo_evidence.sepolia.json',
+            'fundingState': '/runtime/funding_state.sepolia.json',
             'screenshotManifest': '/runtime/screenshot-manifest.sepolia.json',
         },
         'etherscanBaseUrl': SEPOLIA_ETHERSCAN_BASE_URL,

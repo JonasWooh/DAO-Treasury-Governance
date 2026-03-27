@@ -10,6 +10,7 @@ from deliverable_common import (
     ANALYSIS_DIR,
     DEPLOYMENT_MANIFEST_PATH,
     EVIDENCE_MANIFEST_PATH,
+    FUNDING_STATE_PATH,
     FRONTEND_ABI_DIR,
     FRONTEND_CONFIG_PATH,
     FRONTEND_DIR,
@@ -25,7 +26,10 @@ from deliverable_common import (
 
 REQUIRED_FRONTEND_ABIS = [
     'CampusInnovationFundToken',
+    'ReputationRegistry',
+    'HybridVotesAdapter',
     'InnovationGovernor',
+    'FundingRegistry',
     'InnovationTreasury',
     'TreasuryOracle',
     'AaveWethAdapter',
@@ -37,6 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--deployment-manifest', default=str(DEPLOYMENT_MANIFEST_PATH))
     parser.add_argument('--scenario-manifest', default=str(SCENARIO_MANIFEST_PATH))
     parser.add_argument('--evidence-manifest', default=str(EVIDENCE_MANIFEST_PATH))
+    parser.add_argument('--funding-state-manifest', default=str(FUNDING_STATE_PATH))
     parser.add_argument('--screenshot-manifest', default=str(SCREENSHOT_MANIFEST_PATH))
     parser.add_argument('--skip-frontend-build', action='store_true')
     parser.add_argument('--frontend-dir', default=str(FRONTEND_DIR))
@@ -52,9 +57,12 @@ def validate_frontend_bundle(frontend_config_path: Path) -> None:
         raise ValueError('Frontend config must target Sepolia (11155111).')
     if not config.get('configured'):
         raise ValueError('Frontend config is not marked as configured. Run scripts/export_frontend_bundle.py first.')
-    for name, address in config.get('contracts', {}).items():
+    for name in REQUIRED_FRONTEND_ABIS:
+        address = config.get('contracts', {}).get(name)
         if not is_address(address):
             raise ValueError(f'Frontend config contract {name} is not a valid address.')
+    if not config.get('evidenceSources', {}).get('fundingState'):
+        raise ValueError('Frontend config is missing evidenceSources.fundingState.')
     for name in REQUIRED_FRONTEND_ABIS:
         abi_path = FRONTEND_ABI_DIR / f'{name}.json'
         payload = load_json(abi_path)
@@ -116,7 +124,13 @@ def run_frontend_build(frontend_dir: Path) -> None:
 
 def main() -> None:
     args = parse_args()
-    manifests = load_required_manifests(Path(args.deployment_manifest), Path(args.scenario_manifest), Path(args.evidence_manifest), Path(args.screenshot_manifest))
+    manifests = load_required_manifests(
+        Path(args.deployment_manifest),
+        Path(args.scenario_manifest),
+        Path(args.evidence_manifest),
+        Path(args.funding_state_manifest),
+        Path(args.screenshot_manifest),
+    )
     validate_frontend_bundle(Path(args.frontend_config))
     validate_manifest_consistency(manifests)
     validate_required_artifacts(Path(args.report), Path(args.workbook), required_screenshot_paths(manifests['screenshot']))

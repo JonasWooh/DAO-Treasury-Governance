@@ -7,7 +7,10 @@
   },
   "contracts": {
     "CampusInnovationFundToken": "",
+    "ReputationRegistry": "",
+    "HybridVotesAdapter": "",
     "InnovationGovernor": "",
+    "FundingRegistry": "",
     "TimelockController": "",
     "InnovationTreasury": "",
     "TreasuryOracle": "",
@@ -23,6 +26,7 @@
     "deployments": "/runtime/deployments.sepolia.json",
     "proposalScenarios": "/runtime/proposal_scenarios.sepolia.json",
     "demoEvidence": "/runtime/demo_evidence.sepolia.json",
+    "fundingState": "/runtime/funding_state.sepolia.json",
     "screenshotManifest": "/runtime/screenshot-manifest.sepolia.json"
   },
   "etherscanBaseUrl": "https://sepolia.etherscan.io",

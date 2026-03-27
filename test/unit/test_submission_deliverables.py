@@ -30,23 +30,27 @@ def make_manifests(base_dir: Path) -> dict[str, Path]:
     deployment_path = base_dir / 'deployments.sepolia.json'
     scenario_path = base_dir / 'proposal_scenarios.sepolia.json'
     evidence_path = base_dir / 'demo_evidence.sepolia.json'
+    funding_state_path = base_dir / 'funding_state.sepolia.json'
     screenshot_path = base_dir / 'screenshot-manifest.sepolia.json'
 
     deployment_manifest = {
         'network': {'name': 'sepolia', 'chainId': 11155111},
         'contracts': {
             'CampusInnovationFundToken': '0x1000000000000000000000000000000000000001',
-            'InnovationGovernor': '0x1000000000000000000000000000000000000002',
-            'TimelockController': '0x1000000000000000000000000000000000000003',
-            'InnovationTreasury': '0x1000000000000000000000000000000000000004',
-            'TreasuryOracle': '0x1000000000000000000000000000000000000005',
-            'AaveWethAdapter': '0x1000000000000000000000000000000000000006',
+            'ReputationRegistry': '0x1000000000000000000000000000000000000002',
+            'HybridVotesAdapter': '0x1000000000000000000000000000000000000003',
+            'InnovationGovernor': '0x1000000000000000000000000000000000000004',
+            'FundingRegistry': '0x1000000000000000000000000000000000000005',
+            'TimelockController': '0x1000000000000000000000000000000000000006',
+            'InnovationTreasury': '0x1000000000000000000000000000000000000007',
+            'TreasuryOracle': '0x1000000000000000000000000000000000000008',
+            'AaveWethAdapter': '0x1000000000000000000000000000000000000009',
         },
         'externalProtocols': {
-            'WETH': '0x1000000000000000000000000000000000000007',
-            'ChainlinkEthUsdFeed': '0x1000000000000000000000000000000000000008',
-            'AavePool': '0x1000000000000000000000000000000000000009',
-            'AaveAWeth': '0x1000000000000000000000000000000000000010',
+            'WETH': '0x1000000000000000000000000000000000000010',
+            'ChainlinkEthUsdFeed': '0x1000000000000000000000000000000000000011',
+            'AavePool': '0x1000000000000000000000000000000000000012',
+            'AaveAWeth': '0x1000000000000000000000000000000000000013',
         },
         'transactions': {
             'deployToken': '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
@@ -134,6 +138,64 @@ def make_manifests(base_dir: Path) -> dict[str, Path]:
             'transactions': {},
         },
     }
+    funding_state_manifest = {
+        'network': {'name': 'sepolia', 'chainId': 11155111},
+        'contracts': {
+            'FundingRegistry': deployment_manifest['contracts']['FundingRegistry'],
+            'ReputationRegistry': deployment_manifest['contracts']['ReputationRegistry'],
+            'HybridVotesAdapter': deployment_manifest['contracts']['HybridVotesAdapter'],
+        },
+        'generatedAt': '2026-03-27T00:00:00Z',
+        'members': [
+            {
+                'account': '0x2000000000000000000000000000000000000001',
+                'isRegistered': True,
+                'isActive': True,
+                'currentReputation': '120',
+            }
+        ],
+        'proposals': [
+            {
+                'proposalId': '1',
+                'proposer': '0x2000000000000000000000000000000000000001',
+                'recipient': scenario_manifest['project']['recipient'],
+                'title': 'Student robotics lab expansion',
+                'metadataURI': 'ipfs://proposal-metadata',
+                'requestedFundingWeth': '200000000000000000',
+                'milestoneCount': 2,
+                'status': 'Approved',
+                'governorProposalId': '101',
+                'projectId': scenario_manifest['project']['projectId'],
+            }
+        ],
+        'projects': [
+            {
+                'projectId': scenario_manifest['project']['projectId'],
+                'sourceProposalId': '1',
+                'recipient': scenario_manifest['project']['recipient'],
+                'approvedBudgetWeth': '200000000000000000',
+                'releasedWeth': '100000000000000000',
+                'nextClaimableMilestone': 1,
+                'status': 'Active',
+            }
+        ],
+        'milestones': [
+            {
+                'proposalId': '1',
+                'projectId': scenario_manifest['project']['projectId'],
+                'milestoneIndex': 0,
+                'description': 'Install robotics hardware',
+                'amountWeth': '100000000000000000',
+                'evidenceURI': 'ipfs://milestone-0',
+                'state': 'Released',
+                'claimGovernorProposalId': '103',
+            }
+        ],
+        'reputationSummary': {
+            'totalActiveReputation': '120',
+            'activeMemberCount': 1,
+        },
+    }
     screenshot_manifest = {
         'network': {'name': 'sepolia', 'chainId': 11155111},
         'generatedAt': '2026-03-27T00:00:00Z',
@@ -152,12 +214,14 @@ def make_manifests(base_dir: Path) -> dict[str, Path]:
     write_json(deployment_path, deployment_manifest)
     write_json(scenario_path, scenario_manifest)
     write_json(evidence_path, evidence_manifest)
+    write_json(funding_state_path, funding_state_manifest)
     write_json(screenshot_path, screenshot_manifest)
 
     return {
         'deployment': deployment_path,
         'scenario': scenario_path,
         'evidence': evidence_path,
+        'funding_state': funding_state_path,
         'screenshot': screenshot_path,
     }
 
@@ -190,6 +254,7 @@ class SubmissionDeliverablesTests(unittest.TestCase):
                 '--deployment-manifest', str(manifests['deployment']),
                 '--scenario-manifest', str(manifests['scenario']),
                 '--evidence-manifest', str(manifests['evidence']),
+                '--funding-state-manifest', str(manifests['funding_state']),
                 '--screenshot-manifest', str(manifests['screenshot']),
                 '--frontend-config-output', str(frontend_config),
                 '--frontend-runtime-dir', str(frontend_runtime_dir),
@@ -203,6 +268,7 @@ class SubmissionDeliverablesTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertTrue(frontend_config.exists())
         self.assertTrue((frontend_runtime_dir / 'deployments.sepolia.json').exists())
+        self.assertTrue((frontend_runtime_dir / 'funding_state.sepolia.json').exists())
         self.assertTrue((frontend_abi_dir / 'InnovationTreasury.json').exists())
 
     def test_generate_treasury_workbook_creates_required_sheets(self) -> None:
@@ -250,6 +316,7 @@ class SubmissionDeliverablesTests(unittest.TestCase):
                 '--deployment-manifest', str(manifests['deployment']),
                 '--scenario-manifest', str(manifests['scenario']),
                 '--evidence-manifest', str(manifests['evidence']),
+                '--funding-state-manifest', str(manifests['funding_state']),
                 '--screenshot-manifest', str(manifests['screenshot']),
                 '--workbook-summary', str(summary_path),
                 '--output', str(output_path),
@@ -273,11 +340,17 @@ class SubmissionDeliverablesTests(unittest.TestCase):
             'network': {'name': 'sepolia', 'chainId': 11155111},
             'contracts': {
                 'CampusInnovationFundToken': '0x1000000000000000000000000000000000000001',
-                'InnovationGovernor': '0x1000000000000000000000000000000000000002',
-                'TimelockController': '0x1000000000000000000000000000000000000003',
-                'InnovationTreasury': '0x1000000000000000000000000000000000000004',
-                'TreasuryOracle': '0x1000000000000000000000000000000000000005',
-                'AaveWethAdapter': '0x1000000000000000000000000000000000000006'
+                'ReputationRegistry': '0x1000000000000000000000000000000000000002',
+                'HybridVotesAdapter': '0x1000000000000000000000000000000000000003',
+                'InnovationGovernor': '0x1000000000000000000000000000000000000004',
+                'FundingRegistry': '0x1000000000000000000000000000000000000005',
+                'TimelockController': '0x1000000000000000000000000000000000000006',
+                'InnovationTreasury': '0x1000000000000000000000000000000000000007',
+                'TreasuryOracle': '0x1000000000000000000000000000000000000008',
+                'AaveWethAdapter': '0x1000000000000000000000000000000000000009'
+            },
+            'evidenceSources': {
+                'fundingState': '/runtime/funding_state.sepolia.json',
             }
         }, indent=2), encoding='utf-8')
 
@@ -288,6 +361,7 @@ class SubmissionDeliverablesTests(unittest.TestCase):
                 '--deployment-manifest', str(manifests['deployment']),
                 '--scenario-manifest', str(manifests['scenario']),
                 '--evidence-manifest', str(manifests['evidence']),
+                '--funding-state-manifest', str(manifests['funding_state']),
                 '--screenshot-manifest', str(manifests['screenshot']),
                 '--frontend-config', str(frontend_config),
                 '--workbook', str(workbook_path),

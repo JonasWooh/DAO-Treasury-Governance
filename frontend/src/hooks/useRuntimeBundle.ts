@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 
+import { mockRuntimeBundle } from '../sampleRuntimeBundle';
 import type { RuntimeBundle, RuntimeState } from '../types';
 import {
   assertConfiguredFrontendConfig,
   validateDemoEvidenceManifest,
   validateDeploymentManifest,
+  validateFundingStateManifest,
   validateFrontendConfig,
   validateProposalScenarioManifest,
   validateScreenshotManifest,
@@ -31,12 +33,19 @@ export function useRuntimeBundle(): RuntimeState {
     async function loadBundle(): Promise<void> {
       try {
         const config = validateFrontendConfig();
+        if (!config.configured) {
+          if (!cancelled) {
+            setState({ loading: false, bundle: mockRuntimeBundle, error: null });
+          }
+          return;
+        }
         assertConfiguredFrontendConfig(config);
 
-        const [deploymentsPayload, scenariosPayload, evidencePayload, screenshotsPayload] = await Promise.all([
+        const [deploymentsPayload, scenariosPayload, evidencePayload, fundingStatePayload, screenshotsPayload] = await Promise.all([
           fetchJson(config.evidenceSources.deployments),
           fetchJson(config.evidenceSources.proposalScenarios),
           fetchJson(config.evidenceSources.demoEvidence),
+          fetchJson(config.evidenceSources.fundingState),
           fetchJson(config.evidenceSources.screenshotManifest),
         ]);
 
@@ -45,6 +54,7 @@ export function useRuntimeBundle(): RuntimeState {
           deployments: validateDeploymentManifest(deploymentsPayload),
           scenarios: validateProposalScenarioManifest(scenariosPayload),
           evidence: validateDemoEvidenceManifest(evidencePayload),
+          fundingState: validateFundingStateManifest(fundingStatePayload),
           screenshots: validateScreenshotManifest(screenshotsPayload),
         };
 

@@ -6,6 +6,7 @@ from pathlib import Path
 from deliverable_common import (
     DEPLOYMENT_MANIFEST_PATH,
     EVIDENCE_MANIFEST_PATH,
+    FUNDING_STATE_PATH,
     FRONTEND_ABI_DIR,
     FRONTEND_CONFIG_PATH,
     FRONTEND_RUNTIME_DIR,
@@ -23,6 +24,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--deployment-manifest', default=str(DEPLOYMENT_MANIFEST_PATH))
     parser.add_argument('--scenario-manifest', default=str(SCENARIO_MANIFEST_PATH))
     parser.add_argument('--evidence-manifest', default=str(EVIDENCE_MANIFEST_PATH))
+    parser.add_argument('--funding-state-manifest', default=str(FUNDING_STATE_PATH))
     parser.add_argument('--screenshot-manifest', default=str(SCREENSHOT_MANIFEST_PATH))
     parser.add_argument('--frontend-config-output', default=str(FRONTEND_CONFIG_PATH))
     parser.add_argument('--frontend-runtime-dir', default=str(FRONTEND_RUNTIME_DIR))
@@ -36,6 +38,7 @@ def main() -> None:
         Path(args.deployment_manifest),
         Path(args.scenario_manifest),
         Path(args.evidence_manifest),
+        Path(args.funding_state_manifest),
         Path(args.screenshot_manifest),
     )
 
@@ -55,6 +58,7 @@ def main() -> None:
     write_json(frontend_runtime_dir / 'deployments.sepolia.json', manifests['deployment'])
     write_json(frontend_runtime_dir / 'proposal_scenarios.sepolia.json', manifests['scenario'])
     write_json(frontend_runtime_dir / 'demo_evidence.sepolia.json', manifests['evidence'])
+    write_json(frontend_runtime_dir / 'funding_state.sepolia.json', manifests['funding_state'])
     write_json(frontend_runtime_dir / 'screenshot-manifest.sepolia.json', manifests['screenshot'])
 
     print(f'Frontend config written to {frontend_config_output}')
