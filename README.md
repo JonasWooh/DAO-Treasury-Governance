@@ -1,82 +1,97 @@
 # Campus Innovation Fund DAO
 
-This repository implements the `Campus Innovation Fund DAO` described in `Industrial-Quality DAO Prototype Plan on Sepolia.md`.
+Student-run treasury governance on Sepolia, with a full DAO stack covering on-chain voting, timelocked execution, treasury controls, Chainlink valuation, Aave reserve management, QA automation, and a React front end.
 
-The build order follows the original engineering plan:
+![Solidity](https://img.shields.io/badge/Solidity-0.8.24-1f2937?logo=solidity)
+![Foundry](https://img.shields.io/badge/Foundry-Enabled-b45309)
+![React](https://img.shields.io/badge/React-18.3.1-0f766e?logo=react)
+![Vite](https://img.shields.io/badge/Vite-7.1-1d4ed8?logo=vite)
+![Network](https://img.shields.io/badge/Network-Sepolia-065f46)
 
-1. Governance spine
-2. Treasury rules
-3. Oracle and Aave integration
-4. Testing, QA, and static analysis
-5. Sepolia deployment and evidence capture
-6. Front-end and final deliverables
+## Overview
 
-## Current status
+This repository implements a realistic campus grant DAO rather than a minimal voting demo. Token holders govern a student innovation treasury, decide which campus projects receive funding, enforce reserve rules, and manage idle WETH through Aave on Sepolia.
 
-The repository now includes Milestones 1 through 7:
+The project is built around a core governance and treasury story:
 
-- `CampusInnovationFundToken` based on `ERC20Votes`
-- `InnovationGovernor` and `TimelockController` governance wiring
-- `InnovationTreasury` with constrained grant and reserve policy logic
-- `TreasuryOracle` wrapping Chainlink `ETH/USD`
-- `AaveWethAdapter` wrapping Sepolia Aave V3 `WETH`
-- Local protocol mocks and Python unit/integration tests
-- Coverage, gas, and Slither analysis scripts under `scripts/`
-- Semi-automated Sepolia demo scripts for seed state, proposal execution, and evidence export
-- A `React + Vite + TypeScript` frontend with four pages: `Overview`, `Proposals`, `Treasury & NAV`, and `Evidence`
-- Frontend ABI/config export, Excel treasury workbook generation, PDF report generation, and final submission validation scripts
+- `CampusInnovationFundToken` provides ERC20Votes-based governance power
+- `InnovationGovernor` and `TimelockController` enforce proposal, voting, queue, and execution flow
+- `InnovationTreasury` applies constrained treasury policy instead of unrestricted transfers
+- `TreasuryOracle` tracks treasury value through Chainlink `ETH/USD`
+- `AaveWethAdapter` demonstrates yield-aware reserve deployment on Sepolia
+- the frontend presents governance state, proposal history, treasury NAV, and grading evidence
 
-## Repository layout
+## Highlights
 
-See `docs/repository-layout.md` for the folder plan and ownership of each top-level directory.
+- End-to-end DAO architecture with token, governor, timelock, treasury, oracle, and adapter modules
+- Sepolia deployment and proposal automation for repeatable demo execution
+- Python-based QA pipeline for coverage, gas analysis, static analysis, workbook generation, PDF reporting, and final package validation
+- React + Vite + TypeScript front end with four routes: `Overview`, `Proposals`, `Treasury & NAV`, and `Evidence`
+- Strict deliverable generation that fails fast if required manifests, screenshots, or runtime artifacts are missing
 
-## Local workflow
+## Architecture
 
-1. Create the dedicated conda environment:
+| Layer | Main components | Purpose |
+| --- | --- | --- |
+| Governance | `CampusInnovationFundToken`, `InnovationGovernor`, `TimelockController` | Proposal lifecycle, voting, quorum, and delayed execution |
+| Treasury | `InnovationTreasury`, `TreasuryConstants` | Grant disbursement rules, reserve constraints, and treasury permissions |
+| Integrations | `TreasuryOracle`, `AaveWethAdapter` | Chainlink valuation and Aave V3 WETH reserve management |
+| QA and Automation | `scripts/`, `test/`, `analysis/` | Compile, deploy, validate, test, benchmark, and export deliverables |
+| UI and Evidence | `frontend/`, `deployments/`, `evidence/`, `reports/`, `excel/` | Demo interface, manifests, screenshots, workbook, and final report |
+
+## Tech Stack
+
+- Solidity `0.8.24`
+- Foundry project layout with OpenZeppelin contracts
+- Python automation and unit/integration testing
+- React `18`, Vite, TypeScript, `wagmi`, `viem`, and React Query
+- Chainlink `ETH/USD` and Aave V3 on Sepolia
+
+## Quick Start
+
+Clone the repository with submodules:
+
+```powershell
+git clone --recurse-submodules https://github.com/JonasWooh/Dao-Treasury-Governance.git
+cd Dao-Treasury-Governance
+```
+
+Create and activate the project environment:
 
 ```powershell
 conda env create -f environment.yml
-```
-
-2. Activate it:
-
-```powershell
 conda activate cif_dao_env
 ```
 
-3. Install the pinned Solidity compiler explicitly:
+Install the pinned Solidity compiler and compile contracts:
 
 ```powershell
 python scripts/compile_contracts.py --install-solc
-```
-
-4. Compile contracts:
-
-```powershell
 python scripts/compile_contracts.py --clean
 ```
 
-5. Review the checked-in Sepolia protocol addresses:
-
-```powershell
-Get-Content config/sepolia.protocols.json
-```
-
-6. Install frontend packages inside the conda environment:
+Install frontend dependencies:
 
 ```powershell
 npm --prefix frontend install
 ```
 
-## Local verification
+Review checked-in protocol and environment references before deploying:
 
-Run the complete Python unit and integration suite:
+```powershell
+Get-Content config/sepolia.protocols.json
+Get-Content config/sepolia.env.example
+```
+
+## Local Verification
+
+Run the full Python suite:
 
 ```powershell
 python -m unittest discover -s test -p "test_*.py" -v
 ```
 
-Run focused suites when iterating:
+Run targeted suites while iterating:
 
 ```powershell
 python -m unittest test.integration.test_governance_lifecycle -v
@@ -87,59 +102,38 @@ python -m unittest test.unit.test_aave_weth_adapter -v
 python -m unittest test.unit.test_submission_deliverables -v
 ```
 
-Run frontend tests:
+Run frontend tests and build the UI:
 
 ```powershell
 npm --prefix frontend run test
-```
-
-Build the frontend bundle:
-
-```powershell
 $env:VITE_SEPOLIA_RPC_URL="https://your-sepolia-rpc-url"
 $env:VITE_CHAIN_ID="11155111"
 npm --prefix frontend run build
 ```
 
-## Quality artifacts
+## Sepolia Demo Flow
 
-Generate the required QA and engineering outputs:
+The live demo pipeline is intentionally split into explicit steps so each artifact can be verified independently.
 
-```powershell
-python scripts/generate_coverage_report.py
-python scripts/generate_gas_report.py
-python scripts/run_slither_analysis.py
-```
-
-The resulting files are written to:
-
-- `analysis/coverage/`
-- `analysis/gas/`
-- `analysis/static/`
-
-## Milestone 5 demo flow
-
-The Sepolia demo is split into three scripts instead of a single all-in-one command.
-
-1. Prepare the on-chain seed state:
+1. Seed the treasury and governance demo state.
 
 ```powershell
 python scripts/seed_sepolia_demo_state.py --help
 ```
 
-2. Run Proposal 1 through Proposal 3 with automatic waits for voting delay, voting period, and timelock delay:
+2. Run Proposal 1 through Proposal 3 with automatic waits for governance timing.
 
 ```powershell
 python scripts/run_sepolia_demo_proposals.py --help
 ```
 
-3. Export evidence manifests, a report-ready Markdown transaction table, and a screenshot checklist:
+3. Export evidence manifests, transaction tables, and screenshot checklists.
 
 ```powershell
 python scripts/export_sepolia_evidence.py --help
 ```
 
-The Milestone 5 outputs are written to:
+Core Sepolia outputs are written to:
 
 - `deployments/deployments.sepolia.json`
 - `deployments/proposal_scenarios.sepolia.json`
@@ -147,41 +141,18 @@ The Milestone 5 outputs are written to:
 - `deployments/demo_evidence.sepolia.md`
 - `evidence/screenshots/screenshot-checklist.sepolia.md`
 
-## Milestone 6-7 deliverables
+## Deliverables Pipeline
 
-The frontend and final-deliverable pipeline is explicit and strict.
-
-1. Export the authoritative frontend ABI/config/runtime bundle after real Sepolia manifests exist:
+After Sepolia manifests are available, generate the final deliverables:
 
 ```powershell
 python scripts/export_frontend_bundle.py
-```
-
-2. Generate the Excel treasury workbook and summary JSON:
-
-```powershell
 python scripts/generate_treasury_workbook.py
-```
-
-3. Capture every required screenshot listed in:
-
-```powershell
-Get-Content evidence/screenshots/screenshot-manifest.sepolia.json
-```
-
-4. Generate the final PDF report. This step fails hard if any required screenshot is missing:
-
-```powershell
 python scripts/generate_final_report.py
-```
-
-5. Run the final package validator. This checks manifest consistency, ABI/config presence, screenshots, workbook, report, gas/static artifacts, and frontend build success:
-
-```powershell
 python scripts/validate_submission_package.py
 ```
 
-The Milestone 6-7 outputs are written to:
+Generated outputs include:
 
 - `frontend/src/generated/frontend.config.sepolia.json`
 - `frontend/src/generated/abi/*.json`
@@ -189,16 +160,40 @@ The Milestone 6-7 outputs are written to:
 - `excel/treasury_analysis.sepolia.xlsx`
 - `excel/treasury_analysis.sepolia.summary.json`
 - `reports/final_report.sepolia.pdf`
+- `analysis/coverage/*`
+- `analysis/gas/*`
+- `analysis/static/*`
 
-## Environment variables
+## Repository Map
 
-Use `config/sepolia.env.example` as the reference for the Sepolia deployment, demo voter, funder, and project recipient inputs.
+See `docs/repository-layout.md` for the full directory-by-directory reference.
 
-For the frontend build, provide:
+Important top-level areas:
 
-- `VITE_SEPOLIA_RPC_URL`
-- `VITE_CHAIN_ID=11155111`
+- `src/` for contracts, interfaces, adapters, oracle, and mocks
+- `test/` for Python unit and integration tests
+- `scripts/` for compile, deployment, QA, and deliverable automation
+- `frontend/` for the React application and runtime bundles
+- `deployments/` and `evidence/` for Sepolia manifests and screenshot assets
+- `analysis/`, `excel/`, and `reports/` for generated review artifacts
 
-## Important note on strictness
+## Environment Notes
 
-The frontend runtime, report builder, workbook/report pipeline, and final validator do not silently fall back to mock data, empty manifests, placeholder screenshots, or network auto-correction. If authoritative Sepolia artifacts are missing or malformed, the relevant step fails explicitly and must be fixed before sign-off.
+- Use `config/sepolia.env.example` as the source of truth for Sepolia deployment inputs
+- `config/sepolia.env` is local-only and should not be committed with real keys
+- The frontend expects `VITE_SEPOLIA_RPC_URL` and `VITE_CHAIN_ID=11155111`
+- The repository uses OpenZeppelin as a submodule, so `--recurse-submodules` is recommended for fresh clones
+
+## Strictness by Design
+
+This project does not silently fall back to fake runtime data or missing deliverables. If required Sepolia manifests, screenshots, workbook outputs, ABI exports, or report inputs are absent or malformed, the relevant step fails explicitly. That strictness is intentional: the repository is designed to support grading, reproducibility, and final-package confidence.
+
+## Project Plan
+
+The original implementation plan is captured in:
+
+- `Industrial-Quality DAO Prototype Plan on Sepolia.md`
+
+## License
+
+No license has been added yet. If you plan to keep this repository public, adding an explicit license is recommended.
