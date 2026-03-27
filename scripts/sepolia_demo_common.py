@@ -27,9 +27,13 @@ SEPOLIA_ETHERSCAN_BASE_URL = "https://sepolia.etherscan.io"
 
 TOKEN_UNIT = 10**18
 INITIAL_VOTER_ALLOCATION = 200_000 * TOKEN_UNIT
-DEMO_TREASURY_FUNDING_WETH = 5 * TOKEN_UNIT
-DEMO_AAVE_DEPOSIT_WETH = 3 * TOKEN_UNIT
-DEMO_MILESTONE_PAYOUT_WETH = TOKEN_UNIT // 2
+DEMO_TREASURY_FUNDING_WETH = 3 * TOKEN_UNIT
+DEMO_PROJECT_MAX_BUDGET_WETH = TOKEN_UNIT // 5
+DEMO_AAVE_DEPOSIT_WETH = (3 * TOKEN_UNIT) // 5
+DEMO_MILESTONE_PAYOUT_WETH = TOKEN_UNIT // 10
+DEMO_POST_PROPOSAL2_LIQUID_WETH = DEMO_TREASURY_FUNDING_WETH - DEMO_AAVE_DEPOSIT_WETH
+DEMO_POST_PROPOSAL3_SUPPLIED_WETH = DEMO_AAVE_DEPOSIT_WETH - DEMO_MILESTONE_PAYOUT_WETH
+DEMO_POST_PROPOSAL3_TOTAL_MANAGED_WETH = DEMO_TREASURY_FUNDING_WETH - DEMO_MILESTONE_PAYOUT_WETH
 
 PROJECT_NAME = "Smart Recycling Kiosk"
 PROJECT_KEY = "SMART_RECYCLING_KIOSK"
@@ -218,10 +222,11 @@ def make_project_definition(recipient: str) -> dict[str, Any]:
         "projectKey": PROJECT_KEY,
         "projectId": PROJECT_ID,
         "recipient": recipient,
-        "maxBudgetWeth": str(TOKEN_UNIT),
+        "maxBudgetWeth": str(DEMO_PROJECT_MAX_BUDGET_WETH),
         "milestoneCount": 2,
         "milestonePayoutsWeth": {
             "milestone0": str(DEMO_MILESTONE_PAYOUT_WETH),
+            "milestone1": str(DEMO_MILESTONE_PAYOUT_WETH),
         },
     }
 
@@ -248,13 +253,14 @@ def build_demo_scenarios(
                     "approveProject",
                     Web3.to_bytes(hexstr=project["projectId"]),
                     recipient,
-                    TOKEN_UNIT,
+                    DEMO_PROJECT_MAX_BUDGET_WETH,
                     2,
                 )
             ],
             "expectedOutcome": {
                 "projectActive": True,
                 "projectReleasedWeth": "0",
+                "projectMaxBudgetWeth": str(DEMO_PROJECT_MAX_BUDGET_WETH),
                 "treasuryLiquidWeth": str(DEMO_TREASURY_FUNDING_WETH),
                 "treasurySuppliedWeth": "0",
             },
@@ -262,7 +268,7 @@ def build_demo_scenarios(
         {
             "slug": "proposal2_deposit_idle_funds",
             "title": "Proposal 2",
-            "description": "Proposal 2: Deposit 3.0 WETH into Aave",
+            "description": "Proposal 2: Deposit 0.6 WETH into Aave",
             "targets": [treasury.address],
             "values": [0],
             "calldatas": [
@@ -273,15 +279,15 @@ def build_demo_scenarios(
                 )
             ],
             "expectedOutcome": {
-                "treasuryLiquidWeth": str(2 * TOKEN_UNIT),
-                "treasurySuppliedWeth": str(3 * TOKEN_UNIT),
+                "treasuryLiquidWeth": str(DEMO_POST_PROPOSAL2_LIQUID_WETH),
+                "treasurySuppliedWeth": str(DEMO_AAVE_DEPOSIT_WETH),
                 "treasuryTotalManagedWeth": str(DEMO_TREASURY_FUNDING_WETH),
             },
         },
         {
             "slug": "proposal3_withdraw_and_release_milestone",
             "title": "Proposal 3",
-            "description": "Proposal 3: Withdraw 0.5 WETH and release milestone 0",
+            "description": "Proposal 3: Withdraw 0.1 WETH and release milestone 0",
             "targets": [treasury.address, treasury.address],
             "values": [0, 0],
             "calldatas": [
@@ -302,9 +308,9 @@ def build_demo_scenarios(
                 "projectReleasedWeth": str(DEMO_MILESTONE_PAYOUT_WETH),
                 "projectMilestonesReleased": 1,
                 "projectActive": True,
-                "treasuryLiquidWeth": str(2 * TOKEN_UNIT),
-                "treasurySuppliedWeth": str((5 * TOKEN_UNIT) // 2),
-                "treasuryTotalManagedWeth": str((9 * TOKEN_UNIT) // 2),
+                "treasuryLiquidWeth": str(DEMO_POST_PROPOSAL2_LIQUID_WETH),
+                "treasurySuppliedWeth": str(DEMO_POST_PROPOSAL3_SUPPLIED_WETH),
+                "treasuryTotalManagedWeth": str(DEMO_POST_PROPOSAL3_TOTAL_MANAGED_WETH),
                 "recipientIncreaseWeth": str(DEMO_MILESTONE_PAYOUT_WETH),
             },
         },

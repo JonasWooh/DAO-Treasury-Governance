@@ -13,9 +13,12 @@ from sepolia_demo_common import (
     DEFAULT_SCENARIO_MANIFEST,
     DEMO_AAVE_DEPOSIT_WETH,
     DEMO_MILESTONE_PAYOUT_WETH,
+    DEMO_POST_PROPOSAL2_LIQUID_WETH,
+    DEMO_POST_PROPOSAL3_SUPPLIED_WETH,
+    DEMO_POST_PROPOSAL3_TOTAL_MANAGED_WETH,
+    DEMO_PROJECT_MAX_BUDGET_WETH,
     DEMO_TREASURY_FUNDING_WETH,
     PROJECT_ID,
-    TOKEN_UNIT,
     VOTE_SUPPORT_FOR,
     TransactionSender,
     build_demo_scenarios,
@@ -125,34 +128,40 @@ def verify_post_execution_state(
 
     if proposal_slug == "proposal1_approve_project":
         if treasury_snapshot["liquidWeth"] != str(DEMO_TREASURY_FUNDING_WETH):
-            raise RuntimeError("Proposal 1 verification failed: Treasury liquid WETH does not remain at 5.0 WETH.")
+            raise RuntimeError(
+                "Proposal 1 verification failed: Treasury liquid WETH does not remain at the seeded 3.0 WETH balance."
+            )
+        if project_snapshot["maxBudgetWeth"] != str(DEMO_PROJECT_MAX_BUDGET_WETH):
+            raise RuntimeError("Proposal 1 verification failed: project maxBudgetWeth is not 0.2 WETH.")
         if project_snapshot["releasedWeth"] != "0" or not project_snapshot["active"]:
             raise RuntimeError("Proposal 1 verification failed: project state is inconsistent with approval-only execution.")
         if recipient_balance != initial_recipient_balance:
             raise RuntimeError("Proposal 1 verification failed: recipient balance changed before any milestone payout.")
 
     elif proposal_slug == "proposal2_deposit_idle_funds":
-        if treasury_snapshot["liquidWeth"] != str(2 * TOKEN_UNIT):
-            raise RuntimeError("Proposal 2 verification failed: Treasury liquid WETH is not 2.0 WETH.")
+        if treasury_snapshot["liquidWeth"] != str(DEMO_POST_PROPOSAL2_LIQUID_WETH):
+            raise RuntimeError("Proposal 2 verification failed: Treasury liquid WETH is not 2.4 WETH.")
         if treasury_snapshot["suppliedWeth"] != str(DEMO_AAVE_DEPOSIT_WETH):
-            raise RuntimeError("Proposal 2 verification failed: Treasury supplied WETH is not 3.0 WETH.")
+            raise RuntimeError("Proposal 2 verification failed: Treasury supplied WETH is not 0.6 WETH.")
         if treasury_snapshot["totalManagedWeth"] != str(DEMO_TREASURY_FUNDING_WETH):
-            raise RuntimeError("Proposal 2 verification failed: total managed WETH drifted from 5.0 WETH.")
+            raise RuntimeError("Proposal 2 verification failed: total managed WETH drifted from 3.0 WETH.")
 
     elif proposal_slug == "proposal3_withdraw_and_release_milestone":
         expected_recipient_balance = initial_recipient_balance + DEMO_MILESTONE_PAYOUT_WETH
         if recipient_balance != expected_recipient_balance:
             raise RuntimeError(
-                "Proposal 3 verification failed: recipient balance does not reflect the 0.5 WETH milestone payout."
+                "Proposal 3 verification failed: recipient balance does not reflect the 0.1 WETH milestone payout."
             )
         if project_snapshot["releasedWeth"] != str(DEMO_MILESTONE_PAYOUT_WETH):
-            raise RuntimeError("Proposal 3 verification failed: project releasedWeth is not 0.5 WETH.")
+            raise RuntimeError("Proposal 3 verification failed: project releasedWeth is not 0.1 WETH.")
         if project_snapshot["milestonesReleased"] != 1 or not project_snapshot["active"]:
             raise RuntimeError("Proposal 3 verification failed: project milestone progression is inconsistent.")
-        if treasury_snapshot["suppliedWeth"] != str((5 * TOKEN_UNIT) // 2):
-            raise RuntimeError("Proposal 3 verification failed: supplied WETH is not 2.5 WETH after withdrawal.")
-        if treasury_snapshot["liquidWeth"] != str(2 * TOKEN_UNIT):
-            raise RuntimeError("Proposal 3 verification failed: liquid WETH is not 2.0 WETH after payout.")
+        if treasury_snapshot["suppliedWeth"] != str(DEMO_POST_PROPOSAL3_SUPPLIED_WETH):
+            raise RuntimeError("Proposal 3 verification failed: supplied WETH is not 0.5 WETH after withdrawal.")
+        if treasury_snapshot["liquidWeth"] != str(DEMO_POST_PROPOSAL2_LIQUID_WETH):
+            raise RuntimeError("Proposal 3 verification failed: liquid WETH is not 2.4 WETH after payout.")
+        if treasury_snapshot["totalManagedWeth"] != str(DEMO_POST_PROPOSAL3_TOTAL_MANAGED_WETH):
+            raise RuntimeError("Proposal 3 verification failed: total managed WETH is not 2.9 WETH after payout.")
 
     else:
         raise RuntimeError(f"Unknown proposal slug: {proposal_slug}")

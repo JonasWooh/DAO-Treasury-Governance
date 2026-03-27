@@ -163,7 +163,7 @@ def build_story(
     analysis_rows = [['Metric', 'Value'], ['Scenario count', str(workbook_summary['scenarioCount'])], ['Worst-case scenario', f"{workbook_summary['worstCase']['scenario']} -> {workbook_summary['worstCase']['navUsd']} USD"], ['Best-case scenario', f"{workbook_summary['bestCase']['scenario']} -> {workbook_summary['bestCase']['navUsd']} USD"]]
     add_table(story, analysis_rows, column_widths=[2.3 * inch, 4.1 * inch])
     add_section_heading(story, '11. Step-by-step summary of what we did', styles)
-    story.append(Paragraph('1. Deployed the governance spine. 2. Deployed the treasury stack. 3. Seeded Treasury with 5 WETH and activated self-delegation. 4. Executed three complete governance proposals. 5. Exported evidence manifests. 6. Generated frontend, workbook, and report deliverables.', styles['BodyTight']))
+    story.append(Paragraph('1. Deployed the governance spine. 2. Deployed the treasury stack. 3. Seeded Treasury with 3 WETH and activated self-delegation. 4. Executed three complete governance proposals. 5. Exported evidence manifests. 6. Generated frontend, workbook, and report deliverables.', styles['BodyTight']))
     add_section_heading(story, '12. What we learned', styles)
     story.append(Paragraph('The most important lesson is that governance demonstrations are strongest when operational rules are encoded as explicit invariants rather than informal off-chain process. The treasury and adapter layers needed exact balance reconciliation to avoid ambiguity.', styles['BodyTight']))
     add_section_heading(story, '13. References', styles)

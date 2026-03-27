@@ -77,10 +77,11 @@ export const mockRuntimeBundle: RuntimeBundle = {
       projectKey: 'SMART_RECYCLING_KIOSK',
       projectId: '0x1111111111111111111111111111111111111111111111111111111111111111',
       recipient: mockAddresses.recipient,
-      maxBudgetWeth: '1000000000000000000',
+      maxBudgetWeth: '200000000000000000',
       milestoneCount: 2,
       milestonePayoutsWeth: {
-        milestone0: '500000000000000000',
+        milestone0: '100000000000000000',
+        milestone1: '100000000000000000',
       },
     },
     proposals: [
@@ -101,7 +102,7 @@ export const mockRuntimeBundle: RuntimeBundle = {
       {
         slug: 'proposal2_deposit_idle_funds',
         title: 'Proposal 2',
-        description: 'Proposal 2: Deposit 3.0 WETH into Aave',
+        description: 'Proposal 2: Deposit 0.6 WETH into Aave',
         targets: [mockAddresses.treasury],
         values: ['0'],
         calldatas: ['0xbbbb'],
@@ -109,7 +110,27 @@ export const mockRuntimeBundle: RuntimeBundle = {
         proposalId: '102',
         operationId: '0x5555555555555555555555555555555555555555555555555555555555555555',
         expectedOutcome: {
-          treasuryLiquidWeth: '2000000000000000000',
+          treasuryLiquidWeth: '2400000000000000000',
+          treasurySuppliedWeth: '600000000000000000',
+          treasuryTotalManagedWeth: '3000000000000000000',
+        },
+      },
+      {
+        slug: 'proposal3_withdraw_and_release_milestone',
+        title: 'Proposal 3',
+        description: 'Proposal 3: Withdraw 0.1 WETH and release milestone 0',
+        targets: [mockAddresses.treasury, mockAddresses.treasury],
+        values: ['0', '0'],
+        calldatas: ['0xcccc', '0xdddd'],
+        descriptionHash: '0x6666666666666666666666666666666666666666666666666666666666666666',
+        proposalId: '103',
+        operationId: '0x7777777777777777777777777777777777777777777777777777777777777777',
+        expectedOutcome: {
+          projectReleasedWeth: '100000000000000000',
+          projectMilestonesReleased: 1,
+          treasuryLiquidWeth: '2400000000000000000',
+          treasurySuppliedWeth: '500000000000000000',
+          treasuryTotalManagedWeth: '2900000000000000000',
         },
       },
     ],
@@ -171,10 +192,10 @@ export const mockRuntimeBundle: RuntimeBundle = {
         snapshots: {
           postExecution: {
             treasury: {
-              liquidWeth: '2000000000000000000',
-              suppliedWeth: '3000000000000000000',
-              totalManagedWeth: '5000000000000000000',
-              navUsd: '10000000000000000000000',
+              liquidWeth: '2400000000000000000',
+              suppliedWeth: '600000000000000000',
+              totalManagedWeth: '3000000000000000000',
+              navUsd: '6000000000000000000000',
               riskPolicy: {
                 minLiquidReserveBps: 3000,
                 maxSingleGrantBps: 2000,
@@ -182,6 +203,17 @@ export const mockRuntimeBundle: RuntimeBundle = {
               },
             },
           },
+        },
+      },
+      proposal3_withdraw_and_release_milestone: {
+        proposalId: '103',
+        transactions: {
+          propose: '0xccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc1',
+          votes: {
+            voterA: '0xccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc2',
+          },
+          queue: '0xccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc3',
+          execute: '0xccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc4',
         },
       },
     },

@@ -425,7 +425,7 @@ The Sepolia demonstration must follow a precise and repeatable narrative so that
 
 ### Initial treasury state
 
-- Treasury starts with `5.0 WETH`
+- Treasury starts with `3.0 WETH`
 - Three member wallets each hold and self-delegate `200,000 CIF`
 - Treasury policy is set to:
   - `30%` minimum liquid reserve
@@ -439,8 +439,9 @@ Project:
 - Project name in the report: `Smart Recycling Kiosk`
 - `projectId = keccak256("SMART_RECYCLING_KIOSK")`
 - Recipient: designated Sepolia student-project wallet
-- Max budget: `1.0 WETH`
+- Max budget: `0.2 WETH`
 - Milestones: `2`
+- Milestone plan: `0.1 WETH` for milestone 0 and `0.1 WETH` for milestone 1
 
 Expected result:
 
@@ -452,11 +453,11 @@ Expected result:
 
 Action:
 
-- Deposit `3.0 WETH` into Aave through `AaveWethAdapter`
+- Deposit `0.6 WETH` into Aave through `AaveWethAdapter`
 
 Expected result:
 
-- Treasury still keeps `2.0 WETH` liquid, which stays above the `30%` reserve requirement
+- Treasury still keeps `2.4 WETH` liquid, which stays above the `30%` reserve requirement
 - Aave supplied balance becomes visible in contract state and front-end
 - Treasury NAV reporting reflects both liquid and deployed WETH
 
@@ -464,13 +465,13 @@ Expected result:
 
 Action:
 
-- Withdraw `0.5 WETH` from Aave
-- Release milestone 0 payment of `0.5 WETH` to the approved project recipient
+- Withdraw `0.1 WETH` from Aave
+- Release milestone 0 payment of `0.1 WETH` to the approved project recipient
 
 Expected result:
 
 - Recipient balance increases
-- Project `releasedWeth` becomes `0.5 WETH`
+- Project `releasedWeth` becomes `0.1 WETH`
 - Project still remains under the approved budget ceiling
 - Final screenshots clearly show the end-to-end treasury effect
 

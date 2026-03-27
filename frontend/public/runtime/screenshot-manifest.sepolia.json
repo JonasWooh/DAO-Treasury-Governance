@@ -63,7 +63,7 @@
     },
     {
       "id": "proposal-2-aave-state",
-      "caption": "Treasury liquid and supplied WETH state after depositing 3 WETH into Aave.",
+      "caption": "Treasury liquid and supplied WETH state after depositing 0.6 WETH into Aave.",
       "reportSection": "Advanced functionality",
       "expectedPath": "evidence/screenshots/proposal-2-aave-state.png",
       "required": true,
@@ -79,7 +79,7 @@
     },
     {
       "id": "recipient-before-after",
-      "caption": "Project recipient balance before and after the 0.5 WETH milestone payout.",
+      "caption": "Project recipient balance before and after the 0.1 WETH milestone payout.",
       "reportSection": "Sepolia deployment and evidence",
       "expectedPath": "evidence/screenshots/recipient-before-after.png",
       "required": true,

@@ -39,17 +39,17 @@ vi.mock('wagmi', () => ({
   useWaitForTransactionReceipt: () => ({ isLoading: false }),
   useReadContract: ({ functionName }: { functionName: string }) => {
     const map: Record<string, unknown> = {
-      liquidWethBalance: 2000000000000000000n,
-      suppliedWethBalance: 3000000000000000000n,
-      totalManagedWeth: 5000000000000000000n,
-      navUsd: 10000000000000000000000n,
+      liquidWethBalance: 2400000000000000000n,
+      suppliedWethBalance: 500000000000000000n,
+      totalManagedWeth: 2900000000000000000n,
+      navUsd: 5800000000000000000000n,
       totalSupply: 1000000000000000000000000n,
       getVotes: 200000000000000000000000n,
       state: 7n,
       proposalVotes: [0n, 600000000000000000000000n, 0n],
       riskPolicy: [3000n, 2000n, 3600n],
       latestEthUsd: [200000000000n, 1700000000n, 8],
-      getProject: [mockRuntimeBundle.evidence.project?.recipient, 1000000000000000000n, 0n, 2, 0, true],
+      getProject: [mockRuntimeBundle.evidence.project?.recipient, 200000000000000000n, 100000000000000000n, 2, 1, true],
     };
     return { data: map[functionName], error: null };
   },

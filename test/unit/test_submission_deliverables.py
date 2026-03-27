@@ -58,8 +58,12 @@ def make_manifests(base_dir: Path) -> dict[str, Path]:
             'projectKey': 'SMART_RECYCLING_KIOSK',
             'projectId': '0x1111111111111111111111111111111111111111111111111111111111111111',
             'recipient': '0x2000000000000000000000000000000000000004',
-            'maxBudgetWeth': '1000000000000000000',
+            'maxBudgetWeth': '200000000000000000',
             'milestoneCount': 2,
+            'milestonePayoutsWeth': {
+                'milestone0': '100000000000000000',
+                'milestone1': '100000000000000000',
+            },
         },
         'proposals': [
             {
@@ -116,10 +120,10 @@ def make_manifests(base_dir: Path) -> dict[str, Path]:
                 'snapshots': {
                     'postExecution': {
                         'treasury': {
-                            'liquidWeth': '2000000000000000000',
-                            'suppliedWeth': '3000000000000000000',
-                            'totalManagedWeth': '5000000000000000000',
-                            'navUsd': '10000000000000000000000',
+                            'liquidWeth': '2400000000000000000',
+                            'suppliedWeth': '600000000000000000',
+                            'totalManagedWeth': '3000000000000000000',
+                            'navUsd': '6000000000000000000000',
                         }
                     }
                 },
@@ -236,7 +240,7 @@ class SubmissionDeliverablesTests(unittest.TestCase):
         base = self.create_workspace()
         manifests = make_manifests(base)
         summary_path = base / 'treasury_analysis.summary.json'
-        summary_path.write_text(json.dumps({'startingState': {'totalManagedWeth': 5.0, 'liquidWeth': 2.0, 'suppliedWeth': 3.0, 'ethPriceUsd': 2000.0}, 'scenarioCount': 27, 'worstCase': {'scenario': 'Bear / 0% / Heavy', 'navUsd': 7000.0}, 'bestCase': {'scenario': 'Bull / 6% APR / Light', 'navUsd': 14000.0}}, indent=2), encoding='utf-8')
+        summary_path.write_text(json.dumps({'startingState': {'totalManagedWeth': 3.0, 'liquidWeth': 2.4, 'suppliedWeth': 0.6, 'ethPriceUsd': 2000.0}, 'scenarioCount': 27, 'worstCase': {'scenario': 'Bear / 0% / Heavy', 'navUsd': 4200.0}, 'bestCase': {'scenario': 'Bull / 6% APR / Light', 'navUsd': 8400.0}}, indent=2), encoding='utf-8')
         output_path = base / 'final_report.pdf'
 
         completed = subprocess.run(
