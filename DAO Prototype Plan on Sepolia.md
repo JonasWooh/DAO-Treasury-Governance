@@ -1,5 +1,7 @@
 # Campus Innovation Fund DAO on Sepolia: Full-Score Implementation Plan
 
+Note: this document captures the original baseline architecture and delivery plan for the repository. The current codebase also includes a later V2 workflow expansion with `FundingRegistry`, `ReputationRegistry`, `HybridVotesAdapter`, milestone-claim flows, and expanded frontend routes. For the latest repository overview, see `README.md` and `Refine.md`.
+
 ## Executive Summary
 
 This project is a `Campus Innovation Fund DAO` deployed on Sepolia. The DAO represents a student-run treasury that funds campus innovation projects through on-chain governance. Token holders use a newly minted ERC20 governance token, `Campus Innovation Fund Token (CIF)`, to vote on which projects receive funding, when milestone payments are released, what reserve policies the treasury must follow, and how much idle capital may be deposited into Aave for yield.
@@ -561,7 +563,7 @@ At least one formal static-analysis artifact must be produced. The preferred cho
 
 The front-end exists to improve clarity, originality, and evidence quality. It does not need to be a production application, but it must make the DAO easy to understand.
 
-### Fixed pages
+### Fixed pages in the baseline scope
 
 1. `Overview`
    - project summary
@@ -584,6 +586,8 @@ The front-end exists to improve clarity, originality, and evidence quality. It d
    - contract Etherscan links
    - transaction hash table
    - screenshot references used in the report
+
+The current repository keeps these baseline pages and expands the front end with submission, proposal-detail, project-detail, and milestone-claim flows.
 
 ### Front-end interaction requirements
 
@@ -698,7 +702,7 @@ The report should later be assembled from the following evidence checklist:
 6. Proposal 3 propose, vote, queue, and execute screenshots
 7. treasury balances before and after Aave deposit
 8. treasury balances before and after milestone payment
-9. front-end screenshots for all four pages
+9. front-end screenshots for the core overview, pipeline, treasury, and evidence surfaces, plus any added workflow pages used in the final demo
 10. gas report and static-analysis screenshots or exported summaries
 
 ## Final Report Structure
@@ -758,7 +762,7 @@ The implementation should follow this milestone order.
 
 ### Milestone 6: Front-end and final evidence
 
-- complete Overview, Proposals, Treasury & NAV, and Evidence pages
+- complete the baseline Overview, Proposals, Treasury & NAV, and Evidence pages, then extend the UI for workflow-specific submission and claim flows as needed
 - capture screenshots
 - finalize JSON artifacts
 - assemble report-ready evidence

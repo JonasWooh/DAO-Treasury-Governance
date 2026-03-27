@@ -1,13 +1,15 @@
 # Repository Layout
 
-This repository is structured to keep governance, treasury, integrations, QA, UI, and submission artifacts clearly separated.
+This repository is structured to keep governance, funding workflow, treasury, integrations, QA, UI, and submission artifacts clearly separated.
 
 ## Smart contracts
 
 - `src/governance/`
-  - governance token, governor, governance constants
+  - governance token, governor, hybrid voting adapter, reputation registry, and governance constants
+- `src/funding/`
+  - proposal, project, and milestone workflow registry contracts
 - `src/treasury/`
-  - constrained treasury contracts
+  - constrained treasury and milestone release contracts
 - `src/oracle/`
   - Chainlink-backed valuation contracts
 - `src/adapters/`
@@ -22,7 +24,7 @@ This repository is structured to keep governance, treasury, integrations, QA, UI
 - `test/unit/`
   - isolated contract and deliverable tests
 - `test/integration/`
-  - cross-contract and protocol-flow tests
+  - cross-contract, funding workflow, and end-to-end governance tests
 - `scripts/`
   - compile, deployment, QA, frontend bundle export, workbook/report generation, and Sepolia demo automation
   - includes `seed_sepolia_demo_state.py`, `run_sepolia_demo_proposals.py`, `export_sepolia_evidence.py`, `export_frontend_bundle.py`, `generate_treasury_workbook.py`, `generate_final_report.py`, and `validate_submission_package.py`
@@ -30,7 +32,7 @@ This repository is structured to keep governance, treasury, integrations, QA, UI
 ## App and config
 
 - `frontend/`
-  - Vite + React + TypeScript submission UI with exactly four routes: Overview, Proposals, Treasury & NAV, Evidence
+  - Vite + React + TypeScript UI with dashboard, pipeline, submit, proposal detail, project detail, milestone claim, treasury, and evidence routes
   - contains generated ABI/config files under `frontend/src/generated/`
   - contains runtime manifest copies under `frontend/public/runtime/`
 - `config/`
@@ -58,8 +60,10 @@ This repository is structured to keep governance, treasury, integrations, QA, UI
 
 ## Root-level project files
 
-- `Industrial-Quality DAO Prototype Plan on Sepolia.md`
-  - source implementation plan and requirements
+- `DAO Prototype Plan on Sepolia.md`
+  - baseline implementation plan and requirements
+- `Refine.md`
+  - V2 refinement notes for funding workflow, hybrid voting, and reputation-driven governance
 - `Grading Details.png`
   - grading reference captured from the course materials
 - `foundry.toml`
