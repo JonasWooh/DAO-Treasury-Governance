@@ -1,0 +1,13 @@
+Name                                            Stmts   Miss  Cover
+-------------------------------------------------------------------
+test\__init__.py                                    0      0   100%
+test\integration\__init__.py                        0      0   100%
+test\integration\test_governance_lifecycle.py      99      1    99%
+test\integration\test_innovation_treasury.py      188      1    99%
+test\support.py                                    19      1    95%
+test\unit\__init__.py                               0      0   100%
+test\unit\test_aave_weth_adapter.py                83      1    99%
+test\unit\test_governance_token.py                 54      1    98%
+test\unit\test_treasury_oracle.py                  65      1    98%
+-------------------------------------------------------------------
+TOTAL                                             508      6    99%

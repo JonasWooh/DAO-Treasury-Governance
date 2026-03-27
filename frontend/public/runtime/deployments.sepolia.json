@@ -1,0 +1,11 @@
+{
+  "configured": false,
+  "network": {
+    "name": "sepolia",
+    "chainId": 11155111
+  },
+  "contracts": {},
+  "externalProtocols": {},
+  "transactions": {},
+  "note": "Authoritative Sepolia deployment manifest has not been exported into the frontend runtime bundle yet."
+}

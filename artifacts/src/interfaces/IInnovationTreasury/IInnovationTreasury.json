@@ -1,0 +1,235 @@
+{
+  "contractName": "IInnovationTreasury",
+  "sourceName": "src/interfaces/IInnovationTreasury.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "projectId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxBudgetWeth",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "milestoneCount",
+          "type": "uint8"
+        }
+      ],
+      "name": "approveProject",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountWeth",
+          "type": "uint256"
+        }
+      ],
+      "name": "depositIdleFunds",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "projectId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getProject",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxBudgetWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "releasedWeth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "milestoneCount",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "milestonesReleased",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bool",
+              "name": "active",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IInnovationTreasury.Project",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "liquidWethBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "navUsd",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "projectId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint8",
+          "name": "milestoneIndex",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountWeth",
+          "type": "uint256"
+        }
+      ],
+      "name": "releaseMilestone",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "riskPolicy",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "minLiquidReserveBps",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxSingleGrantBps",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "stalePriceThreshold",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "minLiquidReserveBps",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxSingleGrantBps",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "stalePriceThreshold",
+          "type": "uint256"
+        }
+      ],
+      "name": "setRiskPolicy",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "suppliedWethBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalManagedWeth",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountWeth",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdrawIdleFunds",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "",
+  "deployedBytecode": "",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"projectId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"maxBudgetWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"milestoneCount\",\"type\":\"uint8\"}],\"name\":\"approveProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountWeth\",\"type\":\"uint256\"}],\"name\":\"depositIdleFunds\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"projectId\",\"type\":\"bytes32\"}],\"name\":\"getProject\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"maxBudgetWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"releasedWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"milestoneCount\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"milestonesReleased\",\"type\":\"uint8\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"}],\"internalType\":\"struct IInnovationTreasury.Project\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"liquidWethBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"navUsd\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"projectId\",\"type\":\"bytes32\"},{\"internalType\":\"uint8\",\"name\":\"milestoneIndex\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"amountWeth\",\"type\":\"uint256\"}],\"name\":\"releaseMilestone\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"riskPolicy\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"minLiquidReserveBps\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxSingleGrantBps\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"stalePriceThreshold\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"minLiquidReserveBps\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxSingleGrantBps\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"stalePriceThreshold\",\"type\":\"uint256\"}],\"name\":\"setRiskPolicy\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"suppliedWethBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalManagedWeth\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountWeth\",\"type\":\"uint256\"}],\"name\":\"withdrawIdleFunds\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/IInnovationTreasury.sol\":\"IInnovationTreasury\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/IInnovationTreasury.sol\":{\"keccak256\":\"0x2cca23eb4004da91cb636ee6d1c8a6fa5ed64b2c868770b07f5a96dfdaf1ba1c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://035917333f8e0c911e7a6bf2267445660addb3f365793e82b52f3f78488ac8d9\",\"dweb:/ipfs/QmSAQTqpKAN591p9Vvg8Mcy7HufMFQJpVhsmgBnqDQ3DRq\"]}},\"version\":1}"
+}

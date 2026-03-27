@@ -1,0 +1,194 @@
+{
+  "contractName": "MockAaveWethAdapter",
+  "sourceName": "src/mocks/MockAaveWethAdapter.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "weth",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "AddressEmptyCode",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "AddressInsufficientBalance",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "FailedInnerCall",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "suppliedBalanceWeth",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "requestedWeth",
+          "type": "uint256"
+        }
+      ],
+      "name": "InsufficientSuppliedBalance",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "bpsValue",
+          "type": "uint256"
+        }
+      ],
+      "name": "InvalidBps",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "MathOverflowedMulDiv",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "SafeERC20FailedOperation",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "newSupplyPullBps",
+          "type": "uint256"
+        }
+      ],
+      "name": "setSupplyPullBps",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "newWithdrawReturnBps",
+          "type": "uint256"
+        }
+      ],
+      "name": "setWithdrawReturnBps",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "suppliedBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountWeth",
+          "type": "uint256"
+        }
+      ],
+      "name": "supply",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "supplyPullBps",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "wethToken",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountWeth",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "withdrawReturnBps",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "60a060405234801561000f575f80fd5b506040516106e83803806106e883398101604081905261002e9161004a565b6001600160a01b03166080526127106001819055600255610077565b5f6020828403121561005a575f80fd5b81516001600160a01b0381168114610070575f80fd5b9392505050565b60805161064c61009c5f395f818160b6015281816101b00152610200015261064c5ff3fe608060405234801561000f575f80fd5b5060043610610085575f3560e01c80636be6527d116100585780636be6527d1461010c5780638699fdba146101155780639846b98d14610128578063e4e889541461013b575f80fd5b80632e1a7d4d14610089578063354030231461009e5780634b57b0be146100b15780635e60d28a146100f5575b5f80fd5b61009c61009736600461058f565b610142565b005b61009c6100ac36600461058f565b6101db565b6100d87f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b6100fe60015481565b6040519081526020016100ec565b6100fe60025481565b61009c61012336600461058f565b610241565b61009c61013636600461058f565b61026c565b5f546100fe565b5f61015282600254612710610297565b90505f54811115610188575f546040516319e4b53160e01b81526004810191909152602481018290526044015b60405180910390fd5b805f8082825461019891906105ba565b909155505080156101d7576101d76001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000163383610357565b5050565b5f6101eb82600154612710610297565b905080156101d7576102286001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000163330846103bb565b805f8082825461023891906105cd565b90915550505050565b61271081111561026757604051632e109e9f60e01b81526004810182905260240161017f565b600255565b61271081111561029257604051632e109e9f60e01b81526004810182905260240161017f565b600155565b5f838302815f1985870982811083820303915050805f036102cb578382816102c1576102c16105e0565b0492505050610350565b8084116102eb5760405163227bc15360e01b815260040160405180910390fd5b5f848688095f868103871696879004966002600389028118808a02820302808a02820302808a02820302808a02820302808a02820302808a02909103029181900381900460010186841190950394909402919094039290920491909117919091029150505b9392505050565b6040516001600160a01b038381166024830152604482018390526103b691859182169063a9059cbb906064015b604051602081830303815290604052915060e01b6020820180516001600160e01b0383818316178352505050506103fa565b505050565b6040516001600160a01b0384811660248301528381166044830152606482018390526103f49186918216906323b872dd90608401610384565b50505050565b5f61040e6001600160a01b0384168361045b565b905080515f1415801561043257508080602001905181019061043091906105f4565b155b156103b657604051635274afe760e01b81526001600160a01b038416600482015260240161017f565b606061046883835f610471565b90505b92915050565b6060814710156104965760405163cd78605960e01b815230600482015260240161017f565b5f80856001600160a01b031684866040516104b19190610613565b5f6040518083038185875af1925050503d805f81146104eb576040519150601f19603f3d011682016040523d82523d5f602084013e6104f0565b606091505b509150915061050086838361050a565b9695505050505050565b60608261051f5761051a82610566565b610350565b815115801561053657506001600160a01b0384163b155b1561055f57604051639996b31560e01b81526001600160a01b038516600482015260240161017f565b5080610350565b8051156105765780518082602001fd5b604051630a12f52160e11b815260040160405180910390fd5b5f6020828403121561059f575f80fd5b5035919050565b634e487b7160e01b5f52601160045260245ffd5b8181038181111561046b5761046b6105a6565b8082018082111561046b5761046b6105a6565b634e487b7160e01b5f52601260045260245ffd5b5f60208284031215610604575f80fd5b81518015158114610350575f80fd5b5f82515f5b818110156106325760208186018101518583015201610618565b505f92019182525091905056fea164736f6c6343000818000a",
+  "deployedBytecode": "608060405234801561000f575f80fd5b5060043610610085575f3560e01c80636be6527d116100585780636be6527d1461010c5780638699fdba146101155780639846b98d14610128578063e4e889541461013b575f80fd5b80632e1a7d4d14610089578063354030231461009e5780634b57b0be146100b15780635e60d28a146100f5575b5f80fd5b61009c61009736600461058f565b610142565b005b61009c6100ac36600461058f565b6101db565b6100d87f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b6100fe60015481565b6040519081526020016100ec565b6100fe60025481565b61009c61012336600461058f565b610241565b61009c61013636600461058f565b61026c565b5f546100fe565b5f61015282600254612710610297565b90505f54811115610188575f546040516319e4b53160e01b81526004810191909152602481018290526044015b60405180910390fd5b805f8082825461019891906105ba565b909155505080156101d7576101d76001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000163383610357565b5050565b5f6101eb82600154612710610297565b905080156101d7576102286001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000163330846103bb565b805f8082825461023891906105cd565b90915550505050565b61271081111561026757604051632e109e9f60e01b81526004810182905260240161017f565b600255565b61271081111561029257604051632e109e9f60e01b81526004810182905260240161017f565b600155565b5f838302815f1985870982811083820303915050805f036102cb578382816102c1576102c16105e0565b0492505050610350565b8084116102eb5760405163227bc15360e01b815260040160405180910390fd5b5f848688095f868103871696879004966002600389028118808a02820302808a02820302808a02820302808a02820302808a02820302808a02909103029181900381900460010186841190950394909402919094039290920491909117919091029150505b9392505050565b6040516001600160a01b038381166024830152604482018390526103b691859182169063a9059cbb906064015b604051602081830303815290604052915060e01b6020820180516001600160e01b0383818316178352505050506103fa565b505050565b6040516001600160a01b0384811660248301528381166044830152606482018390526103f49186918216906323b872dd90608401610384565b50505050565b5f61040e6001600160a01b0384168361045b565b905080515f1415801561043257508080602001905181019061043091906105f4565b155b156103b657604051635274afe760e01b81526001600160a01b038416600482015260240161017f565b606061046883835f610471565b90505b92915050565b6060814710156104965760405163cd78605960e01b815230600482015260240161017f565b5f80856001600160a01b031684866040516104b19190610613565b5f6040518083038185875af1925050503d805f81146104eb576040519150601f19603f3d011682016040523d82523d5f602084013e6104f0565b606091505b509150915061050086838361050a565b9695505050505050565b60608261051f5761051a82610566565b610350565b815115801561053657506001600160a01b0384163b155b1561055f57604051639996b31560e01b81526001600160a01b038516600482015260240161017f565b5080610350565b8051156105765780518082602001fd5b604051630a12f52160e11b815260040160405180910390fd5b5f6020828403121561059f575f80fd5b5035919050565b634e487b7160e01b5f52601160045260245ffd5b8181038181111561046b5761046b6105a6565b8082018082111561046b5761046b6105a6565b634e487b7160e01b5f52601260045260245ffd5b5f60208284031215610604575f80fd5b81518015158114610350575f80fd5b5f82515f5b818110156106325760208186018101518583015201610618565b505f92019182525091905056fea164736f6c6343000818000a",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"weth\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"AddressEmptyCode\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"AddressInsufficientBalance\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedInnerCall\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"suppliedBalanceWeth\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"requestedWeth\",\"type\":\"uint256\"}],\"name\":\"InsufficientSuppliedBalance\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"bpsValue\",\"type\":\"uint256\"}],\"name\":\"InvalidBps\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MathOverflowedMulDiv\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"SafeERC20FailedOperation\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newSupplyPullBps\",\"type\":\"uint256\"}],\"name\":\"setSupplyPullBps\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newWithdrawReturnBps\",\"type\":\"uint256\"}],\"name\":\"setWithdrawReturnBps\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"suppliedBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountWeth\",\"type\":\"uint256\"}],\"name\":\"supply\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"supplyPullBps\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"wethToken\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountWeth\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"withdrawReturnBps\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"errors\":{\"AddressEmptyCode(address)\":[{\"details\":\"There's no code at `target` (it is not a contract).\"}],\"AddressInsufficientBalance(address)\":[{\"details\":\"The ETH balance of the account is not enough to perform the operation.\"}],\"FailedInnerCall()\":[{\"details\":\"A call to an address target failed. The target may have reverted.\"}],\"MathOverflowedMulDiv()\":[{\"details\":\"Muldiv operation overflow.\"}],\"SafeERC20FailedOperation(address)\":[{\"details\":\"An operation with an ERC20 token failed.\"}]},\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/mocks/MockAaveWethAdapter.sol\":\"MockAaveWethAdapter\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x1c15854d415493331ff06ef9b0899f81dc6960189fa86cfd1b29c4374cc336a3\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5cb41bc9b9e1f5617d8e826c07fb21ecf986f70b4b5b395d6ecf9c5eb9f1a204\",\"dweb:/ipfs/QmNvJhvpJE8b3nyz7RaMCSPhfbmzj1TLuL3a7NkS9AHkGJ\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol\":{\"keccak256\":\"0x36560926db8fa096a799a54143e48ff23002e115d4a8380e31def8f8aab0efd0\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c289d6f0ededdbf5cf5f885adf2d41b76d6fe602946273cab10830f64906af9f\",\"dweb:/ipfs/Qmd81LQLGNmfs3rxwGLHUSJ2d3w5Z4aooxtRkCe7XDDEc8\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol\":{\"keccak256\":\"0xcbb604d28d5f88a843c15f561334d36186f272d7099ae5daa859610871bd505e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cb4a8d2d4884c7dd1917ba022867a3f37cfd88252bb0d8544eb46bfa3a1200af\",\"dweb:/ipfs/Qmdoauv9ffth9R63ZwSQ9HR9LAtVWGsEz8ByTB1eSsCMuL\"]},\"lib/openzeppelin-contracts/contracts/utils/Address.sol\":{\"keccak256\":\"0x0e0796517afb4347534d93ede634036a1621b8486f06501847402357498c0726\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6a3961c19e2887a4fff4644e5284b53d1202e899e161b68771304bfc74bade6\",\"dweb:/ipfs/Qmb1Di8UfhT9QdBAPGiDBX8FYoR9tXd1YWUTUup8GGhg21\"]},\"lib/openzeppelin-contracts/contracts/utils/math/Math.sol\":{\"keccak256\":\"0x2c5cdfbc8308c34f76fc8fde760a72890e1178aedbeb3651662f177a2efe8e02\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2c3ae15eb2fd97ec390937660d1db1ce41a5c939ba5f5da0f359a1ba237ea063\",\"dweb:/ipfs/QmXN2hveEkj9KsfSsNVodzxE626tmnpHK2SmjXDUP6arg1\"]},\"src/interfaces/IAaveWethAdapter.sol\":{\"keccak256\":\"0xe930e522984eb3bd5ac6d1fd28728bb0e4edde09f2fd411a0c7e119ae727056b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f0a4324a5f134f6813602f4bc01a26bb506dbf282a695754b094797350418de4\",\"dweb:/ipfs/QmNRSjS69styEoPFw3WN676sh6EciRFJu773nyYCEoN5x8\"]},\"src/mocks/MockAaveWethAdapter.sol\":{\"keccak256\":\"0x074eacff38cdf6b6e56bd85e34cf7ffa56d19f10f6d791b24f7587ad97522887\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://87e52824de6fe46edd906c857c3dc3f054753f01782f0c0f0e0f3c494cf78a33\",\"dweb:/ipfs/QmXE5u18xgGDMCmZrHFm5htqjakY1hZ1TgpySGgBuut1hi\"]},\"src/treasury/TreasuryConstants.sol\":{\"keccak256\":\"0x4d41f15b4f598f04c0afa49a3be07f9be34205a7857e0b8955cbaf10e7c5a017\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1ff6aaa1f5bdc5891b0fa5b68403f102df66ed9d572a3dbee34953fad41afcc8\",\"dweb:/ipfs/QmcTC9N8JhPB2WJRNBaqnr69rEQimhnsSFWzGRMnoLSQ4o\"]}},\"version\":1}"
+}

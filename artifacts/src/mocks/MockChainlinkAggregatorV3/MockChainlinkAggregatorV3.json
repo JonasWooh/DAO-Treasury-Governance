@@ -1,0 +1,83 @@
+{
+  "contractName": "MockChainlinkAggregatorV3",
+  "sourceName": "src/mocks/MockChainlinkAggregatorV3.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "latestRoundData",
+      "outputs": [
+        {
+          "internalType": "uint80",
+          "name": "roundId",
+          "type": "uint80"
+        },
+        {
+          "internalType": "int256",
+          "name": "answer",
+          "type": "int256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startedAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "updatedAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint80",
+          "name": "answeredInRound",
+          "type": "uint80"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "answer",
+          "type": "int256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "updatedAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "decimals_",
+          "type": "uint8"
+        }
+      ],
+      "name": "setRoundData",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "608060405234801561000f575f80fd5b506002805460ff1916600817905561019c8061002a5f395ff3fe608060405234801561000f575f80fd5b506004361061003f575f3560e01c80631d64bb4b14610043578063313ce56714610058578063feaf968c14610072575b5f80fd5b61005661005136600461011e565b6100b2565b005b60025460405160ff90911681526020015b60405180910390f35b6002545f546001546040805161010090940469ffffffffffffffffffff16808552602085019390935283018190526060830152608082015260a001610069565b6001600260018282829054906101000a900469ffffffffffffffffffff166100da9190610159565b82546101009290920a69ffffffffffffffffffff818102199093169190921691909102179055505f929092556001556002805460ff191660ff909216919091179055565b5f805f60608486031215610130575f80fd5b8335925060208401359150604084013560ff8116811461014e575f80fd5b809150509250925092565b69ffffffffffffffffffff81811683821601908082111561018857634e487b7160e01b5f52601160045260245ffd5b509291505056fea164736f6c6343000818000a",
+  "deployedBytecode": "608060405234801561000f575f80fd5b506004361061003f575f3560e01c80631d64bb4b14610043578063313ce56714610058578063feaf968c14610072575b5f80fd5b61005661005136600461011e565b6100b2565b005b60025460405160ff90911681526020015b60405180910390f35b6002545f546001546040805161010090940469ffffffffffffffffffff16808552602085019390935283018190526060830152608082015260a001610069565b6001600260018282829054906101000a900469ffffffffffffffffffff166100da9190610159565b82546101009290920a69ffffffffffffffffffff818102199093169190921691909102179055505f929092556001556002805460ff191660ff909216919091179055565b5f805f60608486031215610130575f80fd5b8335925060208401359150604084013560ff8116811461014e575f80fd5b809150509250925092565b69ffffffffffffffffffff81811683821601908082111561018857634e487b7160e01b5f52601160045260245ffd5b509291505056fea164736f6c6343000818000a",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"latestRoundData\",\"outputs\":[{\"internalType\":\"uint80\",\"name\":\"roundId\",\"type\":\"uint80\"},{\"internalType\":\"int256\",\"name\":\"answer\",\"type\":\"int256\"},{\"internalType\":\"uint256\",\"name\":\"startedAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"updatedAt\",\"type\":\"uint256\"},{\"internalType\":\"uint80\",\"name\":\"answeredInRound\",\"type\":\"uint80\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int256\",\"name\":\"answer\",\"type\":\"int256\"},{\"internalType\":\"uint256\",\"name\":\"updatedAt\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"decimals_\",\"type\":\"uint8\"}],\"name\":\"setRoundData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/mocks/MockChainlinkAggregatorV3.sol\":\"MockChainlinkAggregatorV3\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/IChainlinkAggregatorV3.sol\":{\"keccak256\":\"0x54013caef69e5125d9ec77bc2fd69ed40ec252d857b340c4f3e9de57d8736e67\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://0884f0e777d6e637c07b6b21dbbe6dc9919688b3ec7d3fd474e8882fb1d114c1\",\"dweb:/ipfs/QmZxqhoN1agVKiXbsK3h2yhMZHg8Bj6L3YaTPSEedHuaGd\"]},\"src/mocks/MockChainlinkAggregatorV3.sol\":{\"keccak256\":\"0x48619a851e7d7611ec004919680c7d69f93ad63616535d79f4b56f3104f0e306\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3c32803f7297e9f33a09121f8e8496e02c8c48f717355b37fbe57e1f7da9c8a2\",\"dweb:/ipfs/QmetRLePamJKnzNNzTDQ8fUhWKvUHJcouatorFc6ZzgfdT\"]}},\"version\":1}"
+}

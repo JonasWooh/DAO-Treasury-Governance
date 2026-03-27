@@ -1,0 +1,8 @@
+{
+  "contractName": "GovernanceConstants",
+  "sourceName": "src/governance/GovernanceConstants.sol",
+  "abi": [],
+  "bytecode": "602c6032600b8282823980515f1a607314602657634e487b7160e01b5f525f60045260245ffd5b305f52607381538281f3fe730000000000000000000000000000000000000000301460806040525f80fdfea164736f6c6343000818000a",
+  "deployedBytecode": "730000000000000000000000000000000000000000301460806040525f80fdfea164736f6c6343000818000a",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/governance/GovernanceConstants.sol\":\"GovernanceConstants\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/governance/GovernanceConstants.sol\":{\"keccak256\":\"0xcfdfaccf15b1fbed03da434f399ef404b75d98bcd5844eaa9c8deb730ef4d3e4\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://0e903e1508fdfbbcfb8f69241169e03cc6bd20acceb838a4276b4af8f5881c14\",\"dweb:/ipfs/QmXWpidbSxoX5Bm3aBocHwViVb6v99TPgFu9rwFXE3seAV\"]}},\"version\":1}"
+}

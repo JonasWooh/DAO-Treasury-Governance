@@ -1,0 +1,30 @@
+{
+  "generatedAt": "UNCONFIGURED",
+  "configured": false,
+  "network": {
+    "name": "sepolia",
+    "chainId": 11155111
+  },
+  "contracts": {
+    "CampusInnovationFundToken": "",
+    "InnovationGovernor": "",
+    "TimelockController": "",
+    "InnovationTreasury": "",
+    "TreasuryOracle": "",
+    "AaveWethAdapter": ""
+  },
+  "externalProtocols": {
+    "WETH": "",
+    "ChainlinkEthUsdFeed": "",
+    "AavePool": "",
+    "AaveAWeth": ""
+  },
+  "evidenceSources": {
+    "deployments": "/runtime/deployments.sepolia.json",
+    "proposalScenarios": "/runtime/proposal_scenarios.sepolia.json",
+    "demoEvidence": "/runtime/demo_evidence.sepolia.json",
+    "screenshotManifest": "/runtime/screenshot-manifest.sepolia.json"
+  },
+  "etherscanBaseUrl": "https://sepolia.etherscan.io",
+  "note": "Run python scripts/export_frontend_bundle.py after authoritative Sepolia deployment manifests are available."
+}

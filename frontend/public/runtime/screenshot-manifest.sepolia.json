@@ -1,0 +1,105 @@
+{
+  "network": {
+    "name": "sepolia",
+    "chainId": 11155111
+  },
+  "generatedAt": "2026-03-27T00:00:00Z",
+  "screenshots": [
+    {
+      "id": "governance-token-etherscan",
+      "caption": "Etherscan page for the deployed CIF token.",
+      "reportSection": "Sepolia deployment and evidence",
+      "expectedPath": "evidence/screenshots/governance-token-etherscan.png",
+      "required": true,
+      "category": "deployment"
+    },
+    {
+      "id": "timelock-etherscan",
+      "caption": "Etherscan page for the deployed timelock controller.",
+      "reportSection": "Sepolia deployment and evidence",
+      "expectedPath": "evidence/screenshots/timelock-etherscan.png",
+      "required": true,
+      "category": "deployment"
+    },
+    {
+      "id": "governor-etherscan",
+      "caption": "Etherscan page for the deployed governor contract.",
+      "reportSection": "Sepolia deployment and evidence",
+      "expectedPath": "evidence/screenshots/governor-etherscan.png",
+      "required": true,
+      "category": "deployment"
+    },
+    {
+      "id": "treasury-stack-etherscan",
+      "caption": "Treasury, oracle, and adapter deployment pages on Etherscan.",
+      "reportSection": "Sepolia deployment and evidence",
+      "expectedPath": "evidence/screenshots/treasury-stack-etherscan.png",
+      "required": true,
+      "category": "deployment"
+    },
+    {
+      "id": "seed-self-delegations",
+      "caption": "Seed-state self-delegation transactions for the three voting members.",
+      "reportSection": "Step-by-step summary of what we did",
+      "expectedPath": "evidence/screenshots/seed-self-delegations.png",
+      "required": true,
+      "category": "governance"
+    },
+    {
+      "id": "proposal-1-lifecycle",
+      "caption": "Proposal 1 propose, vote, queue, and execute evidence.",
+      "reportSection": "Sepolia deployment and evidence",
+      "expectedPath": "evidence/screenshots/proposal-1-lifecycle.png",
+      "required": true,
+      "category": "proposal"
+    },
+    {
+      "id": "proposal-1-project-state",
+      "caption": "Approved Smart Recycling Kiosk project state after Proposal 1 execution.",
+      "reportSection": "Advanced functionality",
+      "expectedPath": "evidence/screenshots/proposal-1-project-state.png",
+      "required": true,
+      "category": "proposal"
+    },
+    {
+      "id": "proposal-2-aave-state",
+      "caption": "Treasury liquid and supplied WETH state after depositing 3 WETH into Aave.",
+      "reportSection": "Advanced functionality",
+      "expectedPath": "evidence/screenshots/proposal-2-aave-state.png",
+      "required": true,
+      "category": "proposal"
+    },
+    {
+      "id": "proposal-3-payout",
+      "caption": "Proposal 3 execution showing the Aave withdrawal and milestone payout.",
+      "reportSection": "Sepolia deployment and evidence",
+      "expectedPath": "evidence/screenshots/proposal-3-payout.png",
+      "required": true,
+      "category": "proposal"
+    },
+    {
+      "id": "recipient-before-after",
+      "caption": "Project recipient balance before and after the 0.5 WETH milestone payout.",
+      "reportSection": "Sepolia deployment and evidence",
+      "expectedPath": "evidence/screenshots/recipient-before-after.png",
+      "required": true,
+      "category": "evidence"
+    },
+    {
+      "id": "treasury-nav-final",
+      "caption": "Final Treasury NAV and balance view used in the report tables.",
+      "reportSection": "Excel treasury analysis",
+      "expectedPath": "evidence/screenshots/treasury-nav-final.png",
+      "required": true,
+      "category": "evidence"
+    },
+    {
+      "id": "frontend-evidence-page",
+      "caption": "Frontend Evidence page showing addresses, tx hashes, and screenshot manifest entries.",
+      "reportSection": "Appendix with addresses, tx hashes, and artifact index",
+      "expectedPath": "evidence/screenshots/frontend-evidence-page.png",
+      "required": true,
+      "category": "frontend"
+    }
+  ]
+}

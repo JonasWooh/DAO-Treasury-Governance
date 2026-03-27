@@ -1,0 +1,8 @@
+{
+  "contractName": "TreasuryConstants",
+  "sourceName": "src/treasury/TreasuryConstants.sol",
+  "abi": [],
+  "bytecode": "602c6032600b8282823980515f1a607314602657634e487b7160e01b5f525f60045260245ffd5b305f52607381538281f3fe730000000000000000000000000000000000000000301460806040525f80fdfea164736f6c6343000818000a",
+  "deployedBytecode": "730000000000000000000000000000000000000000301460806040525f80fdfea164736f6c6343000818000a",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/treasury/TreasuryConstants.sol\":\"TreasuryConstants\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/treasury/TreasuryConstants.sol\":{\"keccak256\":\"0x4d41f15b4f598f04c0afa49a3be07f9be34205a7857e0b8955cbaf10e7c5a017\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1ff6aaa1f5bdc5891b0fa5b68403f102df66ed9d572a3dbee34953fad41afcc8\",\"dweb:/ipfs/QmcTC9N8JhPB2WJRNBaqnr69rEQimhnsSFWzGRMnoLSQ4o\"]}},\"version\":1}"
+}

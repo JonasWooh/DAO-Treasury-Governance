@@ -1,0 +1,12 @@
+{
+  "configured": false,
+  "participants": {},
+  "project": null,
+  "seedState": {},
+  "proposals": {},
+  "etherscanLinks": {
+    "addresses": {},
+    "transactions": {}
+  },
+  "note": "Authoritative Sepolia demo evidence has not been exported into the frontend runtime bundle yet."
+}

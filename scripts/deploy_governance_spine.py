@@ -1,0 +1,233 @@
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+from typing import Any
+
+from eth_account import Account
+from eth_account.signers.local import LocalAccount
+from web3 import Web3
+from web3.contract import Contract
+
+
+ROOT = Path(__file__).resolve().parents[1]
+ARTIFACTS_DIR = ROOT / "artifacts"
+DEFAULT_OUTPUT_PATH = ROOT / "deployments" / "deployments.sepolia.json"
+
+TOKEN_ARTIFACT = ARTIFACTS_DIR / "src" / "governance" / "CampusInnovationFundToken" / "CampusInnovationFundToken.json"
+GOVERNOR_ARTIFACT = ARTIFACTS_DIR / "src" / "governance" / "InnovationGovernor" / "InnovationGovernor.json"
+TIMELOCK_ARTIFACT = (
+    ARTIFACTS_DIR
+    / "lib"
+    / "openzeppelin-contracts"
+    / "contracts"
+    / "governance"
+    / "TimelockController"
+    / "TimelockController.json"
+)
+
+TOKEN_UNIT = 10**18
+INITIAL_VOTER_ALLOCATION = 200_000 * TOKEN_UNIT
+INITIAL_GOVERNANCE_RESERVE = 400_000 * TOKEN_UNIT
+TIMELOCK_MIN_DELAY_SECONDS = 120
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Deploy the governance spine to Sepolia.")
+    parser.add_argument("--rpc-url", default=os.environ.get("SEPOLIA_RPC_URL"))
+    parser.add_argument("--private-key", default=os.environ.get("SEPOLIA_PRIVATE_KEY"))
+    parser.add_argument("--voter-a", default=os.environ.get("CIF_VOTER_A"))
+    parser.add_argument("--voter-b", default=os.environ.get("CIF_VOTER_B"))
+    parser.add_argument("--voter-c", default=os.environ.get("CIF_VOTER_C"))
+    parser.add_argument("--reserve-recipient", default=os.environ.get("CIF_GOVERNANCE_RESERVE"))
+    parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH))
+    parser.add_argument(
+        "--gas-price-wei",
+        type=int,
+        default=None,
+        help="Override the gas price used for every transaction.",
+    )
+    return parser.parse_args()
+
+
+def require_value(value: str | None, name: str) -> str:
+    if value is None or value.strip() == "":
+        raise ValueError(f"Missing required parameter: {name}")
+    return value
+
+
+def to_checksum_address(w3: Web3, raw_value: str, label: str) -> str:
+    if not Web3.is_address(raw_value):
+        raise ValueError(f"Invalid address for {label}: {raw_value}")
+    return w3.to_checksum_address(raw_value)
+
+
+def load_artifact(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Missing artifact: {path}. Run `python scripts/compile_contracts.py` before deployment."
+        )
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def build_contract(w3: Web3, artifact: dict[str, Any], address: str | None = None) -> Contract:
+    if address is None:
+        return w3.eth.contract(abi=artifact["abi"], bytecode=artifact["bytecode"])
+    return w3.eth.contract(address=address, abi=artifact["abi"])
+
+
+class TransactionSender:
+    def __init__(self, w3: Web3, account: LocalAccount, gas_price_wei: int | None) -> None:
+        self.w3 = w3
+        self.account = account
+        self.gas_price_wei = gas_price_wei
+        self.nonce = w3.eth.get_transaction_count(account.address)
+
+    def _base_transaction(self) -> dict[str, Any]:
+        return {
+            "from": self.account.address,
+            "nonce": self.nonce,
+            "chainId": self.w3.eth.chain_id,
+            "gasPrice": self.gas_price_wei if self.gas_price_wei is not None else self.w3.eth.gas_price,
+        }
+
+    def send_contract_deployment(self, contract: Contract, constructor_args: list[Any]) -> tuple[str, str]:
+        transaction = contract.constructor(*constructor_args).build_transaction(self._base_transaction())
+        transaction["gas"] = self.w3.eth.estimate_gas(transaction)
+        signed = self.account.sign_transaction(transaction)
+        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+        receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        self.nonce += 1
+        return receipt["contractAddress"], tx_hash.hex()
+
+    def send_call(self, call) -> str:
+        transaction = call.build_transaction(self._base_transaction())
+        transaction["gas"] = self.w3.eth.estimate_gas(transaction)
+        signed = self.account.sign_transaction(transaction)
+        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+        self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        self.nonce += 1
+        return tx_hash.hex()
+
+
+def main() -> None:
+    args = parse_args()
+
+    rpc_url = require_value(args.rpc_url, "rpc-url or SEPOLIA_RPC_URL")
+    private_key = require_value(args.private_key, "private-key or SEPOLIA_PRIVATE_KEY")
+
+    w3 = Web3(Web3.HTTPProvider(rpc_url))
+    if not w3.is_connected():
+        raise ConnectionError("Unable to connect to the configured RPC endpoint.")
+
+    account: LocalAccount = Account.from_key(private_key)
+    voter_a = to_checksum_address(w3, require_value(args.voter_a, "voter-a or CIF_VOTER_A"), "voter-a")
+    voter_b = to_checksum_address(w3, require_value(args.voter_b, "voter-b or CIF_VOTER_B"), "voter-b")
+    voter_c = to_checksum_address(w3, require_value(args.voter_c, "voter-c or CIF_VOTER_C"), "voter-c")
+    reserve_recipient = to_checksum_address(
+        w3,
+        require_value(args.reserve_recipient, "reserve-recipient or CIF_GOVERNANCE_RESERVE"),
+        "reserve-recipient",
+    )
+
+    token_artifact = load_artifact(TOKEN_ARTIFACT)
+    governor_artifact = load_artifact(GOVERNOR_ARTIFACT)
+    timelock_artifact = load_artifact(TIMELOCK_ARTIFACT)
+
+    tx = TransactionSender(w3=w3, account=account, gas_price_wei=args.gas_price_wei)
+
+    token_contract = build_contract(w3, token_artifact)
+    token_address, token_deploy_tx = tx.send_contract_deployment(token_contract, [account.address])
+
+    timelock_contract = build_contract(w3, timelock_artifact)
+    timelock_address, timelock_deploy_tx = tx.send_contract_deployment(
+        timelock_contract,
+        [TIMELOCK_MIN_DELAY_SECONDS, [], [Web3.to_checksum_address("0x0000000000000000000000000000000000000000")], account.address],
+    )
+
+    governor_contract = build_contract(w3, governor_artifact)
+    governor_address, governor_deploy_tx = tx.send_contract_deployment(
+        governor_contract,
+        [token_address, timelock_address],
+    )
+
+    token_instance = build_contract(w3, token_artifact, token_address)
+    timelock_instance = build_contract(w3, timelock_artifact, timelock_address)
+
+    mint_transactions = {
+        "mintVoterA": tx.send_call(token_instance.functions.mint(voter_a, INITIAL_VOTER_ALLOCATION)),
+        "mintVoterB": tx.send_call(token_instance.functions.mint(voter_b, INITIAL_VOTER_ALLOCATION)),
+        "mintVoterC": tx.send_call(token_instance.functions.mint(voter_c, INITIAL_VOTER_ALLOCATION)),
+        "mintGovernanceReserve": tx.send_call(
+            token_instance.functions.mint(reserve_recipient, INITIAL_GOVERNANCE_RESERVE)
+        ),
+    }
+
+    proposer_role = timelock_instance.functions.PROPOSER_ROLE().call()
+    canceller_role = timelock_instance.functions.CANCELLER_ROLE().call()
+    admin_role = timelock_instance.functions.DEFAULT_ADMIN_ROLE().call()
+
+    timelock_role_transactions = {
+        "grantProposerRole": tx.send_call(timelock_instance.functions.grantRole(proposer_role, governor_address)),
+        "grantCancellerRole": tx.send_call(timelock_instance.functions.grantRole(canceller_role, governor_address)),
+        "renounceAdminRole": tx.send_call(timelock_instance.functions.renounceRole(admin_role, account.address)),
+    }
+
+    token_ownership_tx = tx.send_call(token_instance.functions.renounceOwnership())
+
+    max_supply = token_instance.functions.maxSupply().call()
+    total_supply = token_instance.functions.totalSupply().call()
+    owner = token_instance.functions.owner().call()
+
+    if total_supply != max_supply:
+        raise RuntimeError(f"Token total supply mismatch: expected {max_supply}, got {total_supply}")
+
+    if owner != "0x0000000000000000000000000000000000000000":
+        raise RuntimeError(f"Token ownership was not renounced. Current owner: {owner}")
+
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    deployment_manifest = {
+        "network": {
+            "name": "sepolia",
+            "chainId": w3.eth.chain_id,
+        },
+        "config": {
+            "timelockMinDelaySeconds": TIMELOCK_MIN_DELAY_SECONDS,
+            "initialAllocations": {
+                "voterA": str(INITIAL_VOTER_ALLOCATION),
+                "voterB": str(INITIAL_VOTER_ALLOCATION),
+                "voterC": str(INITIAL_VOTER_ALLOCATION),
+                "governanceReserve": str(INITIAL_GOVERNANCE_RESERVE),
+            },
+        },
+        "contracts": {
+            "CampusInnovationFundToken": token_address,
+            "TimelockController": timelock_address,
+            "InnovationGovernor": governor_address,
+        },
+        "allocationRecipients": {
+            "voterA": voter_a,
+            "voterB": voter_b,
+            "voterC": voter_c,
+            "governanceReserve": reserve_recipient,
+        },
+        "transactions": {
+            "deployToken": token_deploy_tx,
+            "deployTimelock": timelock_deploy_tx,
+            "deployGovernor": governor_deploy_tx,
+            **mint_transactions,
+            **timelock_role_transactions,
+            "renounceTokenOwnership": token_ownership_tx,
+        },
+    }
+
+    output_path.write_text(json.dumps(deployment_manifest, indent=2), encoding="utf-8")
+    print(f"Deployment manifest written to {output_path}")
+
+
+if __name__ == "__main__":
+    main()
