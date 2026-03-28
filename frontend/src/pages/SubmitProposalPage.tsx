@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { parseEther } from 'viem';
+import { Link } from 'react-router-dom';
 import { useAccount, useChainId, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 
 import { contractAbis } from '../lib/abis';
+import { formatAddress, toEtherscanAddressLink, toEtherscanTxLink } from '../lib/formatters';
 import type { RuntimeBundle } from '../types';
 
 interface SubmitProposalPageProps {
@@ -25,6 +27,8 @@ export function SubmitProposalPage({ bundle }: SubmitProposalPageProps) {
   const { isConnected } = useAccount();
   const chainId = useChainId();
   const networkMismatch = isConnected && chainId !== bundle.config.network.chainId;
+  const etherscanBaseUrl = bundle.config.etherscanBaseUrl;
+  const fundingRegistryAddress = bundle.config.contracts.FundingRegistry;
   const [title, setTitle] = useState('Student robotics lab expansion');
   const [metadataURI, setMetadataURI] = useState('ipfs://proposal-metadata');
   const [recipient, setRecipient] = useState(bundle.fundingState.members[0]?.account ?? '');
@@ -76,14 +80,43 @@ export function SubmitProposalPage({ bundle }: SubmitProposalPageProps) {
   return (
     <div className="page-grid single-column">
       <section className="panel panel-wide">
-        <h2>New Funding Request</h2>
-        <p className="muted">
-          Create a treasury request with milestone-based releases and send it to on-chain review.
-        </p>
+        <div className="panel-header">
+          <div>
+            <h2>New Funding Request</h2>
+            <p className="muted">
+              Create a treasury request with milestone-based releases and send it to on-chain review.
+            </p>
+          </div>
+          <div className="panel-actions">
+            <Link className="secondary-button" to="/proposals">
+              Back To Pipeline
+            </Link>
+          </div>
+        </div>
         {networkMismatch ? <p className="inline-error">Switch to Sepolia before submitting.</p> : null}
         {formError ? <p className="inline-error">{formError}</p> : null}
         {writeError ? <p className="inline-error">{writeError.message}</p> : null}
         <div className="stack">
+          <div className="quick-links">
+            <a
+              className="quick-link"
+              href={toEtherscanAddressLink(etherscanBaseUrl, fundingRegistryAddress)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View funding registry
+            </a>
+            {recipient ? (
+              <a
+                className="quick-link"
+                href={toEtherscanAddressLink(etherscanBaseUrl, recipient)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View selected recipient ({formatAddress(recipient)})
+              </a>
+            ) : null}
+          </div>
           <label className="wallet-row">
             <span className="wallet-label">Title</span>
             <input value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -138,7 +171,11 @@ export function SubmitProposalPage({ bundle }: SubmitProposalPageProps) {
           </div>
           {txHash ? (
             <p className="muted">
-              Proposal tx: <code>{txHash}</code> ({receipt.isLoading ? 'pending' : 'confirmed'})
+              Proposal tx:{' '}
+              <a href={toEtherscanTxLink(etherscanBaseUrl, txHash)} target="_blank" rel="noreferrer">
+                <code>{txHash}</code>
+              </a>{' '}
+              ({receipt.isLoading ? 'pending' : 'confirmed'})
             </p>
           ) : null}
         </div>

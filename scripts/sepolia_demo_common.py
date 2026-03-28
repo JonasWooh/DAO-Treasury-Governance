@@ -11,7 +11,7 @@ from eth_account import Account
 from eth_account.signers.local import LocalAccount
 from web3 import Web3
 from web3.contract import Contract
-from web3.exceptions import ContractLogicError
+from web3.exceptions import ContractCustomError, ContractLogicError
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -134,23 +134,35 @@ class TransactionSender:
         self.w3 = w3
         self.account = account
         self.gas_price_wei = gas_price_wei
-        self.nonce = w3.eth.get_transaction_count(account.address)
+        self.nonce = w3.eth.get_transaction_count(account.address, "pending")
+
+    @staticmethod
+    def _apply_gas_buffer(estimated_gas: int) -> int:
+        return max(estimated_gas + 25_000, (estimated_gas * 120) // 100)
+
+    def _next_nonce(self) -> int:
+        onchain_nonce = self.w3.eth.get_transaction_count(self.account.address, "pending")
+        self.nonce = max(self.nonce, onchain_nonce)
+        return self.nonce
 
     def _base_transaction(self) -> dict[str, Any]:
         return {
             "from": self.account.address,
-            "nonce": self.nonce,
+            "nonce": self._next_nonce(),
             "chainId": self.w3.eth.chain_id,
             "gasPrice": self.gas_price_wei if self.gas_price_wei is not None else self.w3.eth.gas_price,
         }
 
     def send_call(self, call) -> tuple[str, Any]:
         transaction = call.build_transaction(self._base_transaction())
-        transaction["gas"] = self.w3.eth.estimate_gas(transaction)
+        estimated_gas = self.w3.eth.estimate_gas(transaction)
+        transaction["gas"] = self._apply_gas_buffer(estimated_gas)
         signed = self.account.sign_transaction(transaction)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
         self.nonce += 1
+        if receipt.get("status") != 1:
+            raise RuntimeError(f"Transaction failed: {tx_hash.hex()}")
         return tx_hash.hex(), receipt
 
 
@@ -210,7 +222,15 @@ def build_minimal_erc20(w3: Web3, address: str) -> Contract:
 
 
 def description_hash(description: str) -> str:
-    return Web3.keccak(text=description).hex()
+    return Web3.to_hex(Web3.keccak(text=description))
+
+
+def timelock_salt(governor_address: str, description_hash_hex: str) -> str:
+    governor_bytes = Web3.to_bytes(hexstr=governor_address)
+    description_hash_bytes = Web3.to_bytes(hexstr=description_hash_hex)
+    padded_governor = governor_bytes + (b"\x00" * (32 - len(governor_bytes)))
+    salt_bytes = bytes(left ^ right for left, right in zip(padded_governor, description_hash_bytes))
+    return Web3.to_hex(salt_bytes)
 
 
 def proposal_state_name(state_value: int) -> str:
@@ -417,12 +437,13 @@ def build_demo_scenarios(
             spec["calldatas"],
             desc_hash,
         ).call()
+        salt = timelock_salt(governor.address, desc_hash)
         operation_id = timelock.functions.hashOperationBatch(
             spec["targets"],
             spec["values"],
             spec["calldatas"],
             Web3.to_bytes(hexstr=ZERO_BYTES32),
-            Web3.to_bytes(hexstr=desc_hash),
+            Web3.to_bytes(hexstr=salt),
         ).call()
 
         proposals.append(
@@ -450,6 +471,8 @@ def build_demo_scenarios(
 def safe_governor_state(governor: Contract, proposal_id: int) -> int | None:
     try:
         return governor.functions.state(proposal_id).call()
+    except ContractCustomError:
+        return None
     except ContractLogicError as exc:
         if "GovernorNonexistentProposal" in str(exc):
             return None
@@ -819,12 +842,13 @@ def execute_governor_proposal(
 ) -> tuple[int, int]:
     desc_hash = description_hash(description)
     proposal_id = governor.functions.hashProposal(targets, values, calldatas, desc_hash).call()
+    salt = timelock_salt(governor.address, desc_hash)
     operation_id = timelock.functions.hashOperationBatch(
         targets,
         values,
         calldatas,
         Web3.to_bytes(hexstr=ZERO_BYTES32),
-        Web3.to_bytes(hexstr=desc_hash),
+        Web3.to_bytes(hexstr=salt),
     ).call()
 
     proposal_record["description"] = description
@@ -858,7 +882,7 @@ def execute_governor_proposal(
     proposal_record["proposer"] = proposer_sender.account.address
 
     if state_value == 0:
-        wait_for_block_number(w3, snapshot_block, poll_interval_seconds, timeout_seconds)
+        wait_for_block_number(w3, snapshot_block + 1, poll_interval_seconds, timeout_seconds)
         state_value = governor.functions.state(proposal_id).call()
 
     if state_value == 1:

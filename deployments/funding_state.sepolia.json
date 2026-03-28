@@ -1,0 +1,90 @@
+{
+  "configured": true,
+  "network": {
+    "name": "sepolia",
+    "chainId": 11155111
+  },
+  "contracts": {
+    "CampusInnovationFundToken": "0xCEd46b584d1adC32144fb53B30571bfc3E26Ac0A",
+    "ReputationRegistry": "0xCdcE19D2E9bFDec7A47FEcD77Fb33E10d2D91aa0",
+    "HybridVotesAdapter": "0xB7eA2f70AafB10155b6182f4CFBD5DB7e40B6750",
+    "TimelockController": "0x24bee92d9a67D9D242266B7A771e27f9C783B706",
+    "InnovationGovernor": "0xE520cd271c41aC8EEE57EFdF12D1cC8229113451",
+    "TreasuryOracle": "0x8Cb05908b16057ce83BF7BE906b363BE0f94D1aA",
+    "FundingRegistry": "0x02D01f71a5A33246453673E4d5C8a1A4C43c3508",
+    "AaveWethAdapter": "0x2351A29BBF20Db7cF1266A0AC0AC2dBb25cdE6F8",
+    "InnovationTreasury": "0x3f3C8D1C6CE2ff332C75bC56fB059B62059d39d6"
+  },
+  "generatedAt": "2026-03-28T02:26:41.004556Z",
+  "members": [
+    {
+      "account": "0x9F6f568626a1254111Bf300dB87bED0DEcEdBA4B",
+      "isRegistered": true,
+      "isActive": true,
+      "currentReputation": "108"
+    },
+    {
+      "account": "0x9460ABA95c0a699D28f7Db1709095431C496dC04",
+      "isRegistered": true,
+      "isActive": true,
+      "currentReputation": "104"
+    },
+    {
+      "account": "0xCfE3BCAba47C85F59d6127d289984408e8F0A716",
+      "isRegistered": true,
+      "isActive": true,
+      "currentReputation": "104"
+    }
+  ],
+  "proposals": [
+    {
+      "proposalId": "1",
+      "proposer": "0x9F6f568626a1254111Bf300dB87bED0DEcEdBA4B",
+      "recipient": "0x219d5a2a550a3e8fCa237E5E30F16d5052A5655D",
+      "title": "Smart Recycling Kiosk Pilot",
+      "metadataURI": "ipfs://campus-innovation-fund/sepolia/proposals/smart-recycling-kiosk-v2",
+      "requestedFundingWeth": "200000000000000000",
+      "milestoneCount": 2,
+      "status": "Approved",
+      "governorProposalId": "55522379004979784243154073825652185598607396307460019166722436029771493969218",
+      "projectId": "0x8f648b169ca5ff7384f0ef53d4dbf787d59183e01f4b9170598c0902e7717002"
+    }
+  ],
+  "projects": [
+    {
+      "projectId": "0x8f648b169ca5ff7384f0ef53d4dbf787d59183e01f4b9170598c0902e7717002",
+      "sourceProposalId": "1",
+      "recipient": "0x219d5a2a550a3e8fCa237E5E30F16d5052A5655D",
+      "approvedBudgetWeth": "200000000000000000",
+      "releasedWeth": "100000000000000000",
+      "nextClaimableMilestone": 1,
+      "status": "Active"
+    }
+  ],
+  "milestones": [
+    {
+      "proposalId": "1",
+      "milestoneIndex": 0,
+      "description": "Install kiosk hardware and telemetry on campus",
+      "amountWeth": "100000000000000000",
+      "evidenceURI": "ipfs://campus-innovation-fund/sepolia/evidence/smart-recycling-kiosk/milestone-0",
+      "state": "Released",
+      "claimGovernorProposalId": "111399561018444129992237408883692073814110890150110607660428901138111338772838",
+      "projectId": "0x8f648b169ca5ff7384f0ef53d4dbf787d59183e01f4b9170598c0902e7717002"
+    },
+    {
+      "proposalId": "1",
+      "milestoneIndex": 1,
+      "description": "Publish pilot impact report and expansion plan",
+      "amountWeth": "100000000000000000",
+      "evidenceURI": "",
+      "state": "OpenForClaim",
+      "claimGovernorProposalId": "0",
+      "projectId": "0x8f648b169ca5ff7384f0ef53d4dbf787d59183e01f4b9170598c0902e7717002"
+    }
+  ],
+  "reputationSummary": {
+    "totalActiveReputation": "316",
+    "activeMemberCount": 3
+  }
+}

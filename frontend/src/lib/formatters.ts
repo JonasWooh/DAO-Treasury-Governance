@@ -5,6 +5,13 @@ export function formatAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+export function formatCompactIdentifier(value: string, leading = 10, trailing = 8): string {
+  if (value.length <= leading + trailing + 3) {
+    return value;
+  }
+  return `${value.slice(0, leading)}...${value.slice(-trailing)}`;
+}
+
 export function formatTokenAmount(rawValue: string | bigint, decimals = 18, precision = 4): string {
   const value = typeof rawValue === 'bigint' ? rawValue : BigInt(rawValue);
   const divisor = 10n ** BigInt(decimals);

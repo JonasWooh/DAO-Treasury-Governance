@@ -56,7 +56,16 @@ export function EvidencePage({ bundle }: EvidencePageProps) {
           <tbody>
             {bundle.fundingState.members.map((member) => (
               <tr key={member.account}>
-                <td><code>{formatAddress(member.account)}</code></td>
+                <td>
+                  <a
+                    className="quick-link quick-link-code"
+                    href={toEtherscanAddressLink(bundle.config.etherscanBaseUrl, member.account)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <code>{formatAddress(member.account)}</code>
+                  </a>
+                </td>
                 <td>{member.isRegistered ? 'yes' : 'no'}</td>
                 <td>{member.isActive ? 'yes' : 'no'}</td>
                 <td>{member.currentReputation}</td>
@@ -80,7 +89,16 @@ export function EvidencePage({ bundle }: EvidencePageProps) {
             {Object.entries(bundle.deployments.contracts).map(([name, address]) => (
               <tr key={name}>
                 <td>{name}</td>
-                <td><code>{formatAddress(address)}</code></td>
+                <td>
+                  <a
+                    className="quick-link quick-link-code"
+                    href={toEtherscanAddressLink(bundle.config.etherscanBaseUrl, address)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <code>{formatAddress(address)}</code>
+                  </a>
+                </td>
                 <td>
                   <a href={toEtherscanAddressLink(bundle.config.etherscanBaseUrl, address)} target="_blank" rel="noreferrer">
                     Open
@@ -108,7 +126,11 @@ export function EvidencePage({ bundle }: EvidencePageProps) {
               <tr key={`${row.section}-${row.step}-${row.txHash}`}>
                 <td>{row.section}</td>
                 <td>{row.step}</td>
-                <td><code>{formatAddress(row.txHash)}</code></td>
+                <td>
+                  <a className="quick-link quick-link-code" href={row.url} target="_blank" rel="noreferrer">
+                    <code>{formatAddress(row.txHash)}</code>
+                  </a>
+                </td>
                 <td>
                   <a href={row.url} target="_blank" rel="noreferrer">
                     Open

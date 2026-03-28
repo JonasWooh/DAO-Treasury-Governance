@@ -9,7 +9,18 @@ import {
 
 import { RuntimeErrorPanel } from '../components/RuntimeErrorPanel';
 import { contractAbis } from '../lib/abis';
-import { formatAddress, formatTokenAmount } from '../lib/formatters';
+import {
+  normalizeMemberResult,
+  normalizeMilestoneResult,
+  normalizeProposalResult,
+} from '../lib/contractResults';
+import {
+  formatAddress,
+  formatCompactIdentifier,
+  formatTokenAmount,
+  toEtherscanAddressLink,
+  toEtherscanTxLink,
+} from '../lib/formatters';
 import {
   fundingProposalStatusLabel,
   governorStateLabel,
@@ -22,22 +33,6 @@ import type { FundingMilestone, RuntimeBundle } from '../types';
 interface ProposalDetailPageProps {
   bundle: RuntimeBundle;
 }
-
-type ProposalTuple = readonly [
-  bigint,
-  `0x${string}`,
-  `0x${string}`,
-  string,
-  string,
-  bigint,
-  number,
-  number,
-  bigint,
-  `0x${string}`
-];
-
-type MemberTuple = readonly [boolean, boolean, bigint];
-type MilestoneTuple = readonly [number, string, bigint, string, number, bigint];
 
 function GovernorStateValue({
   governorAddress,
@@ -85,36 +80,36 @@ function MilestoneRow({
     query: { enabled: !previewMode },
   });
 
-  const milestone = data as MilestoneTuple | undefined;
+  const milestone = normalizeMilestoneResult(data);
   const claimGovernorProposalId = previewMode
     ? BigInt(previewMilestone?.claimGovernorProposalId ?? '0')
-    : milestone?.[5] ?? 0n;
+    : milestone?.claimGovernorProposalId ?? 0n;
 
   return (
     <tr>
       <td>{milestoneIndex}</td>
-      <td>{previewMode ? previewMilestone?.description ?? 'Preview' : milestone?.[1] ?? 'Loading...'}</td>
+      <td>{previewMode ? previewMilestone?.description ?? 'Preview' : milestone?.description ?? 'Loading...'}</td>
       <td>
         {previewMode
           ? previewMilestone
             ? `${formatTokenAmount(previewMilestone.amountWeth)} WETH`
             : 'Preview'
           : milestone
-            ? `${formatTokenAmount(milestone[2])} WETH`
+            ? `${formatTokenAmount(milestone.amountWeth)} WETH`
             : 'Loading...'}
       </td>
       <td>
         {previewMode
           ? previewMilestone?.state ?? 'Preview'
           : milestone
-            ? milestoneStateLabel(Number(milestone[4]))
+            ? milestoneStateLabel(Number(milestone.state))
             : 'Loading...'}
       </td>
       <td>
         {previewMode
           ? previewMilestone?.evidenceURI || 'Not submitted'
-          : milestone?.[3]
-            ? milestone[3]
+          : milestone?.evidenceURI
+            ? milestone.evidenceURI
             : 'Not submitted'}
       </td>
       <td>
@@ -154,6 +149,7 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
   const reputationRegistryAddress = bundle.config.contracts.ReputationRegistry;
   const hybridVotesAddress = bundle.config.contracts.HybridVotesAdapter;
   const governorAddress = bundle.config.contracts.InnovationGovernor;
+  const etherscanBaseUrl = bundle.config.etherscanBaseUrl;
   const proposalId = BigInt(snapshot.proposalId);
   const networkMismatch = isConnected && chainId !== bundle.config.network.chainId;
   const snapshotMember = bundle.fundingState.members.find((member) => member.account === snapshot.proposer);
@@ -168,7 +164,7 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
     args: [proposalId],
     query: { enabled: !previewMode },
   });
-  const liveProposal = proposalData as ProposalTuple | undefined;
+  const liveProposal = normalizeProposalResult(proposalData);
 
   const { data: proposerMember, error: memberError } = useReadContract({
     address: reputationRegistryAddress as `0x${string}`,
@@ -177,7 +173,7 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
     args: [snapshot.proposer],
     query: { enabled: !previewMode },
   });
-  const memberTuple = proposerMember as MemberTuple | undefined;
+  const memberTuple = normalizeMemberResult(proposerMember);
 
   const { data: hybridVotes, error: hybridError } = useReadContract({
     address: hybridVotesAddress as `0x${string}`,
@@ -188,8 +184,8 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
   });
   const hybridVotesValue = hybridVotes as bigint | undefined;
 
-  const governorProposalId = liveProposal?.[8] ?? BigInt(snapshot.governorProposalId);
-  const liveStatus = liveProposal ? fundingProposalStatusLabel(Number(liveProposal[7])) : snapshot.status;
+  const governorProposalId = liveProposal?.governorProposalId ?? BigInt(snapshot.governorProposalId);
+  const liveStatus = liveProposal ? fundingProposalStatusLabel(liveProposal.status) : snapshot.status;
   const { data: governorStateData, error: governorStateError } = useReadContract({
     address: governorAddress as `0x${string}`,
     abi: contractAbis.InnovationGovernor,
@@ -217,7 +213,7 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
   const { data: voteTxHash, error: voteError, isPending: votePending, writeContract } = useWriteContract();
   const voteReceipt = useWaitForTransactionReceipt({ hash: voteTxHash });
 
-  if (liveProposal && Number(liveProposal[7]) > 0 && governorProposalId === 0n) {
+  if (liveProposal && liveProposal.status > 0 && governorProposalId === 0n) {
     return (
       <RuntimeErrorPanel
         title="Missing Governor Link"
@@ -247,14 +243,19 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
       <section className="panel panel-wide">
         <div className="proposal-header">
           <div>
-            <h2>{liveProposal?.[3] ?? snapshot.title}</h2>
+            <h2>{liveProposal?.title ?? snapshot.title}</h2>
             <p className="muted">
               Funding request, governance progress, and release readiness for this project.
             </p>
           </div>
-          <span className="status">{liveStatus}</span>
+          <div className="panel-actions">
+            <span className="status">{liveStatus}</span>
+            <Link className="secondary-button" to="/proposals">
+              Back To Pipeline
+            </Link>
+          </div>
         </div>
-        <p className="subtle-kicker">Reference: {liveProposal?.[4] ?? snapshot.metadataURI}</p>
+        <p className="subtle-kicker">Reference: {liveProposal?.metadataURI ?? snapshot.metadataURI}</p>
         {!previewMode && proposalError ? <p className="inline-error">{proposalError.message}</p> : null}
         {!previewMode && memberError ? <p className="inline-error">{memberError.message}</p> : null}
         {!previewMode && hybridError ? <p className="inline-error">{hybridError.message}</p> : null}
@@ -265,18 +266,21 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
         <div className="metrics-grid">
           <div className="metric-card">
             <span className="metric-label">Recipient</span>
-            <strong className="metric-value">{formatAddress(liveProposal?.[2] ?? snapshot.recipient)}</strong>
+            <strong className="metric-value">{formatAddress(liveProposal?.recipient ?? snapshot.recipient)}</strong>
           </div>
           <div className="metric-card">
             <span className="metric-label">Requested Funding</span>
             <strong className="metric-value">
-              {formatTokenAmount(liveProposal?.[5] ?? snapshot.requestedFundingWeth)} WETH
+              {formatTokenAmount(liveProposal?.requestedFundingWeth ?? snapshot.requestedFundingWeth)} WETH
             </strong>
           </div>
           <div className="metric-card">
             <span className="metric-label">Governor Proposal</span>
-            <strong className="metric-value">
-              {governorProposalId > 0n ? governorProposalId.toString() : 'Unlinked'}
+            <strong
+              className={governorProposalId > 0n ? 'metric-value metric-value-mono' : 'metric-value'}
+              title={governorProposalId > 0n ? governorProposalId.toString() : undefined}
+            >
+              {governorProposalId > 0n ? formatCompactIdentifier(governorProposalId.toString(), 12, 10) : 'Unlinked'}
             </strong>
           </div>
           <div className="metric-card">
@@ -297,7 +301,7 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
           <div className="metric-card">
             <span className="metric-label">Proposer Reputation</span>
             <strong className="metric-value">
-              {previewMode ? snapshotMember?.currentReputation ?? 'Preview' : memberTuple ? memberTuple[2].toString() : 'Loading...'}
+              {previewMode ? snapshotMember?.currentReputation ?? 'Preview' : memberTuple ? memberTuple.currentReputation.toString() : 'Loading...'}
             </strong>
           </div>
           <div className="metric-card">
@@ -310,24 +314,57 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
         <div className="stack compact-stack">
           <div className="address-block">
             <span className="wallet-label">Proposer</span>
-            <code>{formatAddress(liveProposal?.[1] ?? snapshot.proposer)}</code>
+            <a
+              className="quick-link quick-link-code"
+              href={toEtherscanAddressLink(etherscanBaseUrl, liveProposal?.proposer ?? snapshot.proposer)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <code>{formatAddress(liveProposal?.proposer ?? snapshot.proposer)}</code>
+            </a>
             <span className="muted">
               {previewMode
                 ? `${snapshotMember?.isRegistered ? 'registered' : 'unregistered'} / ${snapshotMember?.isActive ? 'active' : 'inactive'}`
                 : memberTuple
-                  ? `${memberTuple[0] ? 'registered' : 'unregistered'} / ${memberTuple[1] ? 'active' : 'inactive'}`
+                  ? `${memberTuple.isRegistered ? 'registered' : 'unregistered'} / ${memberTuple.isActive ? 'active' : 'inactive'}`
                   : 'Loading membership...'}
             </span>
           </div>
-          {(liveProposal?.[9] ?? snapshot.projectId) &&
-          (liveProposal?.[9] ?? snapshot.projectId) !==
+          {(liveProposal?.projectId ?? snapshot.projectId) &&
+          (liveProposal?.projectId ?? snapshot.projectId) !==
             '0x0000000000000000000000000000000000000000000000000000000000000000' ? (
             <div className="button-row">
-              <Link className="secondary-button" to={`/projects/${liveProposal?.[9] ?? snapshot.projectId}`}>
+              <Link className="secondary-button" to={`/projects/${liveProposal?.projectId ?? snapshot.projectId}`}>
                 Open Project Detail
               </Link>
             </div>
           ) : null}
+          <div className="quick-links">
+            <a
+              className="quick-link"
+              href={toEtherscanAddressLink(etherscanBaseUrl, liveProposal?.recipient ?? snapshot.recipient)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View recipient wallet
+            </a>
+            <a
+              className="quick-link"
+              href={toEtherscanAddressLink(etherscanBaseUrl, fundingRegistryAddress)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View funding registry
+            </a>
+            <a
+              className="quick-link"
+              href={toEtherscanAddressLink(etherscanBaseUrl, governorAddress)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View governor contract
+            </a>
+          </div>
         </div>
       </section>
 
@@ -391,7 +428,11 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
         ) : null}
         {voteTxHash ? (
           <p className="muted">
-            Vote tx: <code>{voteTxHash}</code> ({voteReceipt.isLoading ? 'pending' : 'confirmed'})
+            Vote tx:{' '}
+            <a href={toEtherscanTxLink(etherscanBaseUrl, voteTxHash)} target="_blank" rel="noreferrer">
+              <code>{voteTxHash}</code>
+            </a>{' '}
+            ({voteReceipt.isLoading ? 'pending' : 'confirmed'})
           </p>
         ) : null}
       </section>
@@ -405,7 +446,7 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
             </p>
           </div>
           <Link className="action-button" to={`/claims/${snapshot.proposalId}/0`}>
-            Submit Claim
+            Submit Delivery Proof
           </Link>
         </div>
         <table className="data-table">
@@ -420,7 +461,7 @@ export function ProposalDetailPage({ bundle }: ProposalDetailPageProps) {
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: liveProposal?.[6] ?? snapshot.milestoneCount }, (_, milestoneIndex) => (
+            {Array.from({ length: liveProposal?.milestoneCount ?? snapshot.milestoneCount }, (_, milestoneIndex) => (
               <MilestoneRow
                 key={`${snapshot.proposalId}-${milestoneIndex}`}
                 fundingRegistryAddress={fundingRegistryAddress}

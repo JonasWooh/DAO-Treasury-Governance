@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import time
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +38,7 @@ from sepolia_demo_common import (
     parse_account_from_key,
     proposal_state_name,
     require_value,
+    safe_governor_state,
     snapshot_milestone_state,
     snapshot_project_state,
     snapshot_proposal_state,
@@ -172,6 +174,21 @@ def verify_demo_business_proposal(
             )
 
 
+def find_demo_business_proposal_id(
+    funding_registry,
+    proposer: str,
+    recipient: str,
+) -> int | None:
+    proposal_count = int(funding_registry.functions.proposalCount().call())
+    for proposal_id in range(1, proposal_count + 1):
+        try:
+            verify_demo_business_proposal(funding_registry, proposal_id, proposer, recipient)
+            return proposal_id
+        except RuntimeError:
+            continue
+    return None
+
+
 def ensure_business_proposal_submitted(
     funding_registry,
     proposer_sender: TransactionSender,
@@ -191,9 +208,14 @@ def ensure_business_proposal_submitted(
 
     proposal_count_before = funding_registry.functions.proposalCount().call()
     if proposal_count_before != 0:
-        raise RuntimeError(
-            "FundingRegistry already contains proposals, but the evidence manifest does not record the demo funding proposal."
-        )
+        existing_proposal_id = find_demo_business_proposal_id(funding_registry, proposer, recipient)
+        if existing_proposal_id is None:
+            raise RuntimeError(
+                "FundingRegistry already contains proposals, but the evidence manifest does not record the demo funding proposal."
+            )
+        workflow["fundingProposalId"] = str(existing_proposal_id)
+        verify_demo_business_proposal(funding_registry, existing_proposal_id, proposer, recipient)
+        return existing_proposal_id
 
     submit_tx_hash, _ = proposer_sender.send_call(
         funding_registry.functions.submitProposal(
@@ -205,8 +227,18 @@ def ensure_business_proposal_submitted(
             [DEMO_MILESTONE_PAYOUT_WETH, DEMO_MILESTONE_PAYOUT_WETH],
         )
     )
-    proposal_count_after = funding_registry.functions.proposalCount().call()
+    deadline = time.monotonic() + 45.0
+    proposal_count_after = int(funding_registry.functions.proposalCount().call())
+    while proposal_count_after < proposal_count_before + 1 and time.monotonic() <= deadline:
+        time.sleep(2.0)
+        proposal_count_after = int(funding_registry.functions.proposalCount().call())
     if proposal_count_after != proposal_count_before + 1:
+        existing_proposal_id = find_demo_business_proposal_id(funding_registry, proposer, recipient)
+        if existing_proposal_id is not None:
+            workflow["fundingProposalId"] = str(existing_proposal_id)
+            transactions["submitFundingProposal"] = submit_tx_hash
+            verify_demo_business_proposal(funding_registry, existing_proposal_id, proposer, recipient)
+            return existing_proposal_id
         raise RuntimeError(
             "Funding proposal submission did not increment FundingRegistry.proposalCount() by exactly one."
         )
@@ -299,6 +331,39 @@ def ensure_milestone_governor_link(
             "Milestone 0 is linked to an unexpected governor proposal: "
             f"expected {expected_governor_proposal_id}, got {current_link}."
         )
+
+
+def ensure_governor_proposal_created(
+    governor,
+    proposer_sender: TransactionSender,
+    proposal_record: dict[str, Any],
+    scenario_entry: dict[str, Any],
+    persist_callback,
+) -> int:
+    transactions = proposal_record.setdefault("transactions", {})
+    transactions.setdefault("propose", None)
+    snapshots = proposal_record.setdefault("snapshots", {})
+
+    expected_proposal_id = int(scenario_entry["proposalId"])
+    state_value = safe_governor_state(governor, expected_proposal_id)
+    if state_value is not None:
+        return expected_proposal_id
+
+    propose_tx_hash, propose_receipt = proposer_sender.send_call(
+        governor.functions.propose(
+            scenario_entry["targets"],
+            [int(value) for value in scenario_entry["values"]],
+            scenario_entry["calldatas"],
+            scenario_entry["description"],
+        )
+    )
+    transactions["propose"] = propose_tx_hash
+    snapshots["proposalCreated"] = {
+        "blockNumber": propose_receipt["blockNumber"],
+        "transactionHash": propose_tx_hash,
+    }
+    persist_callback()
+    return expected_proposal_id
 
 
 def ensure_funding_vote_participation_settled(
@@ -604,6 +669,13 @@ def main() -> None:
     persist_callback()
     proposal1_record["workflow"].update(proposal_specs["proposal1_approve_project"]["workflow"])
     proposal1_record["workflow"]["fundingProposalId"] = str(funding_proposal_id)
+    ensure_governor_proposal_created(
+        governor,
+        proposer_sender,
+        proposal1_record,
+        proposal_specs["proposal1_approve_project"],
+        persist_callback,
+    )
     ensure_main_governor_link(
         funding_registry,
         proposer_sender,
@@ -637,6 +709,13 @@ def main() -> None:
         if proposal_slug == "proposal3_release_milestone":
             ensure_milestone_claim_submitted(funding_registry, proposer_sender, proposal_record, funding_proposal_id)
             persist_callback()
+            ensure_governor_proposal_created(
+                governor,
+                proposer_sender,
+                proposal_record,
+                scenario_entry,
+                persist_callback,
+            )
             ensure_milestone_governor_link(
                 funding_registry,
                 proposer_sender,

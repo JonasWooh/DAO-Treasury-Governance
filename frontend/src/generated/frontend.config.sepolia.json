@@ -1,26 +1,26 @@
 {
-  "generatedAt": "UNCONFIGURED",
-  "configured": false,
+  "generatedAt": "2026-03-28T02:30:52.738906+00:00",
+  "configured": true,
   "network": {
     "name": "sepolia",
     "chainId": 11155111
   },
   "contracts": {
-    "CampusInnovationFundToken": "",
-    "ReputationRegistry": "",
-    "HybridVotesAdapter": "",
-    "InnovationGovernor": "",
-    "FundingRegistry": "",
-    "TimelockController": "",
-    "InnovationTreasury": "",
-    "TreasuryOracle": "",
-    "AaveWethAdapter": ""
+    "CampusInnovationFundToken": "0xCEd46b584d1adC32144fb53B30571bfc3E26Ac0A",
+    "ReputationRegistry": "0xCdcE19D2E9bFDec7A47FEcD77Fb33E10d2D91aa0",
+    "HybridVotesAdapter": "0xB7eA2f70AafB10155b6182f4CFBD5DB7e40B6750",
+    "InnovationGovernor": "0xE520cd271c41aC8EEE57EFdF12D1cC8229113451",
+    "FundingRegistry": "0x02D01f71a5A33246453673E4d5C8a1A4C43c3508",
+    "TimelockController": "0x24bee92d9a67D9D242266B7A771e27f9C783B706",
+    "InnovationTreasury": "0x3f3C8D1C6CE2ff332C75bC56fB059B62059d39d6",
+    "TreasuryOracle": "0x8Cb05908b16057ce83BF7BE906b363BE0f94D1aA",
+    "AaveWethAdapter": "0x2351A29BBF20Db7cF1266A0AC0AC2dBb25cdE6F8"
   },
   "externalProtocols": {
-    "WETH": "",
-    "ChainlinkEthUsdFeed": "",
-    "AavePool": "",
-    "AaveAWeth": ""
+    "WETH": "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
+    "ChainlinkEthUsdFeed": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+    "AavePool": "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951",
+    "AaveAWeth": "0x5b071b590a59395fE4025A0Ccc1FcC931AAc1830"
   },
   "evidenceSources": {
     "deployments": "/runtime/deployments.sepolia.json",
@@ -29,6 +29,5 @@
     "fundingState": "/runtime/funding_state.sepolia.json",
     "screenshotManifest": "/runtime/screenshot-manifest.sepolia.json"
   },
-  "etherscanBaseUrl": "https://sepolia.etherscan.io",
-  "note": "Run python scripts/export_frontend_bundle.py after authoritative Sepolia deployment manifests are available."
+  "etherscanBaseUrl": "https://sepolia.etherscan.io"
 }

@@ -113,12 +113,16 @@ describe('App routes', () => {
     renderApp(['/proposals']);
     expect(screen.getByText('Funding Pipeline')).toBeInTheDocument();
     expect(screen.getByText('Student robotics lab expansion')).toBeInTheDocument();
+    expect(screen.getByText('Governance Timeline')).toBeInTheDocument();
+    expect(screen.getByText('Proposal 2')).toBeInTheDocument();
+    expect(screen.getByText('Proposal 3')).toBeInTheDocument();
   });
 
   it('renders the Proposal Detail page', () => {
     renderApp(['/proposals/1']);
     expect(screen.getByText('Milestone Schedule')).toBeInTheDocument();
     expect(screen.getByText('Proposer Reputation')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back To Pipeline' })).toBeInTheDocument();
   });
 
   it('renders the Project Detail page', () => {
@@ -126,6 +130,7 @@ describe('App routes', () => {
     expect(screen.getByText('Release Ledger')).toBeInTheDocument();
     expect(screen.getByText('Project Detail')).toBeInTheDocument();
     expect(screen.getByText('Proposer Reputation')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back To Pipeline' })).toBeInTheDocument();
   });
 
   it('renders the Submit Proposal page', () => {
@@ -136,8 +141,9 @@ describe('App routes', () => {
 
   it('renders the Milestone Claim page', () => {
     renderApp(['/claims/1/1']);
-    expect(screen.getByText('Submit Milestone Evidence')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Submit Claim' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Submit Delivery Proof' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Submit Delivery Proof' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back To Pipeline' })).toBeInTheDocument();
   });
 
   it('renders the Treasury page', () => {
@@ -154,16 +160,8 @@ describe('App routes', () => {
     expect(screen.getByText('108')).toBeInTheDocument();
   });
 
-  it('falls back to the bundled sample runtime when the exported frontend config is still unconfigured', async () => {
-    const queryClient = new QueryClient();
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/']}>
-          <App />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
-    expect(await screen.findByText('Fund Overview')).toBeInTheDocument();
+  it('renders the preview runtime banner when a sample bundle is supplied', () => {
+    renderApp(['/']);
     expect(screen.getByText(/preview data is active/i)).toBeInTheDocument();
   });
 });

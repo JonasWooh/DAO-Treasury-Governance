@@ -9,7 +9,7 @@ from typing import Any
 import rlp
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
-from eth_utils import keccak, to_canonical_address, to_checksum_address
+from eth_utils import keccak, to_canonical_address, to_checksum_address as eth_utils_to_checksum_address
 from web3 import Web3
 from web3.contract import Contract
 
@@ -87,7 +87,7 @@ def build_contract(w3: Web3, artifact: dict[str, Any], address: str | None = Non
 
 def predict_create_address(deployer: str, nonce: int) -> str:
     encoded = rlp.encode([to_canonical_address(deployer), nonce])
-    return to_checksum_address(keccak(encoded)[12:])
+    return eth_utils_to_checksum_address(keccak(encoded)[12:])
 
 
 class TransactionSender:
@@ -96,6 +96,10 @@ class TransactionSender:
         self.account = account
         self.gas_price_wei = gas_price_wei
         self.nonce = w3.eth.get_transaction_count(account.address)
+
+    @staticmethod
+    def _apply_gas_buffer(estimated_gas: int) -> int:
+        return max(estimated_gas + 25_000, (estimated_gas * 120) // 100)
 
     def _base_transaction(self) -> dict[str, Any]:
         return {
@@ -107,20 +111,28 @@ class TransactionSender:
 
     def send_contract_deployment(self, contract: Contract, constructor_args: list[Any]) -> tuple[str, str]:
         transaction = contract.constructor(*constructor_args).build_transaction(self._base_transaction())
-        transaction["gas"] = self.w3.eth.estimate_gas(transaction)
+        estimated_gas = self.w3.eth.estimate_gas(transaction)
+        transaction["gas"] = self._apply_gas_buffer(estimated_gas)
         signed = self.account.sign_transaction(transaction)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
         self.nonce += 1
+        if receipt.get("status") != 1:
+            raise RuntimeError(f"Contract deployment failed: {tx_hash.hex()}")
         return receipt["contractAddress"], tx_hash.hex()
 
-    def send_call(self, call) -> str:
+    def send_call(self, call, label: str | None = None) -> str:
         transaction = call.build_transaction(self._base_transaction())
-        transaction["gas"] = self.w3.eth.estimate_gas(transaction)
+        estimated_gas = self.w3.eth.estimate_gas(transaction)
+        transaction["gas"] = self._apply_gas_buffer(estimated_gas)
         signed = self.account.sign_transaction(transaction)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
-        self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
         self.nonce += 1
+        if receipt.get("status") != 1:
+            raise RuntimeError(
+                f"Transaction failed while executing {label or 'contract call'}: {tx_hash.hex()}"
+            )
         return tx_hash.hex()
 
 
@@ -200,11 +212,21 @@ def main() -> None:
     timelock_instance = build_contract(w3, timelock_artifact, timelock_address)
 
     mint_transactions = {
-        "mintVoterA": tx.send_call(token_instance.functions.mint(voter_a, INITIAL_VOTER_ALLOCATION)),
-        "mintVoterB": tx.send_call(token_instance.functions.mint(voter_b, INITIAL_VOTER_ALLOCATION)),
-        "mintVoterC": tx.send_call(token_instance.functions.mint(voter_c, INITIAL_VOTER_ALLOCATION)),
+        "mintVoterA": tx.send_call(
+            token_instance.functions.mint(voter_a, INITIAL_VOTER_ALLOCATION),
+            label="mintVoterA",
+        ),
+        "mintVoterB": tx.send_call(
+            token_instance.functions.mint(voter_b, INITIAL_VOTER_ALLOCATION),
+            label="mintVoterB",
+        ),
+        "mintVoterC": tx.send_call(
+            token_instance.functions.mint(voter_c, INITIAL_VOTER_ALLOCATION),
+            label="mintVoterC",
+        ),
         "mintGovernanceReserve": tx.send_call(
-            token_instance.functions.mint(reserve_recipient, INITIAL_GOVERNANCE_RESERVE)
+            token_instance.functions.mint(reserve_recipient, INITIAL_GOVERNANCE_RESERVE),
+            label="mintGovernanceReserve",
         ),
     }
 
@@ -213,12 +235,38 @@ def main() -> None:
     admin_role = timelock_instance.functions.DEFAULT_ADMIN_ROLE().call()
 
     timelock_role_transactions = {
-        "grantProposerRole": tx.send_call(timelock_instance.functions.grantRole(proposer_role, governor_address)),
-        "grantCancellerRole": tx.send_call(timelock_instance.functions.grantRole(canceller_role, governor_address)),
-        "renounceAdminRole": tx.send_call(timelock_instance.functions.renounceRole(admin_role, account.address)),
+        "grantProposerRole": tx.send_call(
+            timelock_instance.functions.grantRole(proposer_role, governor_address),
+            label="grantProposerRole",
+        ),
+        "grantCancellerRole": tx.send_call(
+            timelock_instance.functions.grantRole(canceller_role, governor_address),
+            label="grantCancellerRole",
+        ),
+        "renounceAdminRole": tx.send_call(
+            timelock_instance.functions.renounceRole(admin_role, account.address),
+            label="renounceAdminRole",
+        ),
     }
 
-    token_ownership_tx = tx.send_call(token_instance.functions.renounceOwnership())
+    expected_balances = {
+        "voterA": (voter_a, INITIAL_VOTER_ALLOCATION),
+        "voterB": (voter_b, INITIAL_VOTER_ALLOCATION),
+        "voterC": (voter_c, INITIAL_VOTER_ALLOCATION),
+        "governanceReserve": (reserve_recipient, INITIAL_GOVERNANCE_RESERVE),
+    }
+    for label, (recipient, expected_balance) in expected_balances.items():
+        actual_balance = token_instance.functions.balanceOf(recipient).call()
+        if actual_balance != expected_balance:
+            raise RuntimeError(
+                f"Token allocation mismatch for {label}: expected {expected_balance}, got {actual_balance} "
+                f"at {recipient}."
+            )
+
+    token_ownership_tx = tx.send_call(
+        token_instance.functions.renounceOwnership(),
+        label="renounceTokenOwnership",
+    )
 
     max_supply = token_instance.functions.maxSupply().call()
     total_supply = token_instance.functions.totalSupply().call()

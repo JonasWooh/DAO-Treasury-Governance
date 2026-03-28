@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import time
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,23 @@ from sepolia_demo_common import (
 DEFAULT_MIN_LIQUID_RESERVE_BPS = 3000
 DEFAULT_MAX_SINGLE_GRANT_BPS = 2000
 DEFAULT_STALE_PRICE_THRESHOLD = 3600
+
+
+def wait_for_self_delegation(
+    token,
+    address: str,
+    expected_votes: int,
+    poll_interval_seconds: float,
+    timeout_seconds: float,
+) -> int:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() <= deadline:
+        delegate = token.functions.delegates(address).call()
+        votes = token.functions.getVotes(address).call()
+        if delegate == address and votes == expected_votes:
+            return votes
+        time.sleep(poll_interval_seconds)
+    return token.functions.getVotes(address).call()
 
 
 def parse_args() -> argparse.Namespace:
@@ -315,7 +333,13 @@ def main() -> None:
 
         sender = TransactionSender(w3, account, args.gas_price_wei)
         delegation_tx_hash, _ = sender.send_call(token.functions.delegate(account.address))
-        votes_after = token.functions.getVotes(account.address).call()
+        votes_after = wait_for_self_delegation(
+            token=token,
+            address=account.address,
+            expected_votes=INITIAL_VOTER_ALLOCATION,
+            poll_interval_seconds=max(1.0, min(args.poll_interval_seconds, 5.0)),
+            timeout_seconds=min(args.timeout_seconds, 60.0),
+        )
         if votes_after != INITIAL_VOTER_ALLOCATION:
             raise RuntimeError(
                 f"{label} self-delegation failed: expected {INITIAL_VOTER_ALLOCATION} votes, got {votes_after}."

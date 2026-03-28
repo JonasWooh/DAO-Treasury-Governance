@@ -9,7 +9,7 @@ from typing import Any
 import rlp
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
-from eth_utils import keccak, to_canonical_address, to_checksum_address
+from eth_utils import keccak, to_canonical_address, to_checksum_address as eth_utils_to_checksum_address
 from web3 import Web3
 from web3.contract import Contract
 
@@ -72,7 +72,7 @@ def to_checked_address(w3: Web3, raw_value: str, label: str) -> str:
 
 def predict_create_address(deployer: str, nonce: int) -> str:
     encoded = rlp.encode([to_canonical_address(deployer), nonce])
-    return to_checksum_address(keccak(encoded)[12:])
+    return eth_utils_to_checksum_address(keccak(encoded)[12:])
 
 
 class TransactionSender:
@@ -81,6 +81,10 @@ class TransactionSender:
         self.account = account
         self.gas_price_wei = gas_price_wei
         self.nonce = w3.eth.get_transaction_count(account.address)
+
+    @staticmethod
+    def _apply_gas_buffer(estimated_gas: int) -> int:
+        return max(estimated_gas + 25_000, (estimated_gas * 120) // 100)
 
     def _base_transaction(self) -> dict[str, Any]:
         return {
@@ -92,11 +96,14 @@ class TransactionSender:
 
     def send_contract_deployment(self, contract: Contract, constructor_args: list[Any]) -> tuple[str, str]:
         transaction = contract.constructor(*constructor_args).build_transaction(self._base_transaction())
-        transaction["gas"] = self.w3.eth.estimate_gas(transaction)
+        estimated_gas = self.w3.eth.estimate_gas(transaction)
+        transaction["gas"] = self._apply_gas_buffer(estimated_gas)
         signed = self.account.sign_transaction(transaction)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
         self.nonce += 1
+        if receipt.get("status") != 1:
+            raise RuntimeError(f"Contract deployment failed: {tx_hash.hex()}")
         return receipt["contractAddress"], tx_hash.hex()
 
 

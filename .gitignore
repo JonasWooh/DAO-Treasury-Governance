@@ -8,6 +8,10 @@ __pycache__/
 test/.tmp/
 config/sepolia.env
 frontend/.env
+.playwright-cli/
+.vite/
+node_modules/
+output/
 
 out/
 cache/

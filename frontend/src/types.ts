@@ -42,6 +42,7 @@ export interface ProposalScenario {
   descriptionHash: string;
   proposalId: string;
   operationId: string;
+  workflow?: Record<string, string | boolean | number | string[]>;
   expectedOutcome: Record<string, string | boolean | number>;
 }
 

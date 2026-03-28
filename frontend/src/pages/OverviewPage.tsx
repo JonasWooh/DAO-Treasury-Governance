@@ -3,7 +3,13 @@ import { useReadContract } from 'wagmi';
 import { MetricCard } from '../components/MetricCard';
 import { WalletPanel } from '../components/WalletPanel';
 import { contractAbis } from '../lib/abis';
-import { formatAddress, formatTokenAmount, formatUsd18 } from '../lib/formatters';
+import { normalizeMemberResult } from '../lib/contractResults';
+import {
+  formatAddress,
+  formatTokenAmount,
+  formatUsd18,
+  toEtherscanAddressLink,
+} from '../lib/formatters';
 import { isPreviewRuntime } from '../lib/runtimeMode';
 import type { Member, RuntimeBundle } from '../types';
 
@@ -11,17 +17,17 @@ interface OverviewPageProps {
   bundle: RuntimeBundle;
 }
 
-type MemberTuple = readonly [boolean, boolean, bigint];
-
 function MemberLiveRow({
   member,
   reputationRegistryAddress,
   hybridVotesAddress,
+  etherscanBaseUrl,
   previewMode,
 }: {
   member: Member;
   reputationRegistryAddress: string;
   hybridVotesAddress: string;
+  etherscanBaseUrl: string;
   previewMode: boolean;
 }) {
   const { data: memberData } = useReadContract({
@@ -39,18 +45,25 @@ function MemberLiveRow({
     query: { enabled: !previewMode },
   });
 
-  const liveMember = memberData as MemberTuple | undefined;
+  const liveMember = normalizeMemberResult(memberData);
   const liveHybridVotes = hybridVotes as bigint | undefined;
 
   return (
     <div className="address-block">
       <span className="wallet-label">{formatAddress(member.account)}</span>
-      <code>{member.account}</code>
+      <a
+        className="quick-link quick-link-code"
+        href={toEtherscanAddressLink(etherscanBaseUrl, member.account)}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <code>{member.account}</code>
+      </a>
       <span className="muted">
         {previewMode
           ? `${member.isActive ? 'active' : 'inactive'} / reputation ${member.currentReputation} / hybrid snapshot`
           : liveMember
-          ? `${liveMember[1] ? 'active' : 'inactive'} / reputation ${liveMember[2].toString()} / hybrid ${formatTokenAmount(liveHybridVotes ?? 0n)}`
+          ? `${liveMember.isActive ? 'active' : 'inactive'} / reputation ${liveMember.currentReputation.toString()} / hybrid ${formatTokenAmount(liveHybridVotes ?? 0n)}`
           : 'Loading member state...'}
       </span>
     </div>
@@ -128,6 +141,7 @@ export function OverviewPage({ bundle }: OverviewPageProps) {
       <WalletPanel
         tokenAddress={tokenAddress}
         expectedChainId={bundle.config.network.chainId}
+        etherscanBaseUrl={bundle.config.etherscanBaseUrl}
       />
 
       <section className="panel">
@@ -139,6 +153,7 @@ export function OverviewPage({ bundle }: OverviewPageProps) {
               member={member}
               reputationRegistryAddress={bundle.config.contracts.ReputationRegistry}
               hybridVotesAddress={bundle.config.contracts.HybridVotesAdapter}
+              etherscanBaseUrl={bundle.config.etherscanBaseUrl}
               previewMode={previewMode}
             />
           ))}
@@ -151,7 +166,14 @@ export function OverviewPage({ bundle }: OverviewPageProps) {
           {Object.entries(bundle.deployments.contracts).map(([name, address]) => (
             <li key={name}>
               <span>{name}</span>
-              <code>{address}</code>
+              <a
+                className="quick-link quick-link-code"
+                href={toEtherscanAddressLink(bundle.config.etherscanBaseUrl, address)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <code>{address}</code>
+              </a>
             </li>
           ))}
         </ul>
