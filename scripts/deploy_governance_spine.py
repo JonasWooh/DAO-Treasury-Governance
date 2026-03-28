@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import rlp
+from cli_security import resolve_env_or_cli
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
 from eth_utils import keccak, to_canonical_address, to_checksum_address as eth_utils_to_checksum_address
@@ -42,9 +43,16 @@ TREASURY_PRE_FUNDING_DEPLOYMENTS = 1
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Deploy the governance spine to Sepolia.")
-    parser.add_argument("--rpc-url", default=os.environ.get("SEPOLIA_RPC_URL"))
-    parser.add_argument("--private-key", default=os.environ.get("SEPOLIA_PRIVATE_KEY"))
+    parser = argparse.ArgumentParser(
+        description="Deploy the governance spine to Sepolia.",
+        epilog="Prefer SEPOLIA_PRIVATE_KEY in the environment. Passing --private-key directly is discouraged because shells persist history.",
+    )
+    parser.add_argument("--rpc-url", default=None, help="Override SEPOLIA_RPC_URL for this run.")
+    parser.add_argument(
+        "--private-key",
+        default=None,
+        help="UNSAFE override for SEPOLIA_PRIVATE_KEY. Prefer the environment variable to avoid shell history leaks.",
+    )
     parser.add_argument("--voter-a", default=os.environ.get("CIF_VOTER_A"))
     parser.add_argument("--voter-b", default=os.environ.get("CIF_VOTER_B"))
     parser.add_argument("--voter-c", default=os.environ.get("CIF_VOTER_C"))
@@ -139,8 +147,19 @@ class TransactionSender:
 def main() -> None:
     args = parse_args()
 
-    rpc_url = require_value(args.rpc_url, "rpc-url or SEPOLIA_RPC_URL")
-    private_key = require_value(args.private_key, "private-key or SEPOLIA_PRIVATE_KEY")
+    rpc_url = require_value(
+        resolve_env_or_cli(args.rpc_url, "SEPOLIA_RPC_URL", cli_flag="--rpc-url"),
+        "rpc-url or SEPOLIA_RPC_URL",
+    )
+    private_key = require_value(
+        resolve_env_or_cli(
+            args.private_key,
+            "SEPOLIA_PRIVATE_KEY",
+            cli_flag="--private-key",
+            sensitive=True,
+        ),
+        "SEPOLIA_PRIVATE_KEY or --private-key",
+    )
 
     w3 = Web3(Web3.HTTPProvider(rpc_url))
     if not w3.is_connected():

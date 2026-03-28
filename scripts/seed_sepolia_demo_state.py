@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from cli_security import resolve_env_or_cli
 from sepolia_demo_common import (
     DEFAULT_DEPLOYMENT_MANIFEST,
     DEFAULT_EVIDENCE_MANIFEST,
@@ -19,7 +20,6 @@ from sepolia_demo_common import (
     build_empty_evidence_manifest,
     connect_to_sepolia,
     encode_call,
-    env_default,
     execute_governor_proposal,
     load_json,
     load_required_contracts,
@@ -56,16 +56,35 @@ def wait_for_self_delegation(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Seed the Sepolia V2 demo state.")
-    parser.add_argument("--rpc-url", default=env_default("SEPOLIA_RPC_URL"))
+    parser = argparse.ArgumentParser(
+        description="Seed the Sepolia V2 demo state.",
+        epilog="Prefer the *_PRIVATE_KEY environment variables over CLI flags so secrets do not end up in shell history.",
+    )
+    parser.add_argument("--rpc-url", default=None, help="Override SEPOLIA_RPC_URL for this run.")
     parser.add_argument("--deployment-manifest", default=str(DEFAULT_DEPLOYMENT_MANIFEST))
     parser.add_argument("--evidence-output", default=str(DEFAULT_EVIDENCE_MANIFEST))
     parser.add_argument("--funding-state-output", default=str(DEFAULT_FUNDING_STATE_MANIFEST))
-    parser.add_argument("--project-recipient", default=env_default("CIF_PROJECT_RECIPIENT"))
-    parser.add_argument("--funder-private-key", default=env_default("CIF_TREASURY_FUNDER_PRIVATE_KEY"))
-    parser.add_argument("--voter-a-private-key", default=env_default("CIF_VOTER_A_PRIVATE_KEY"))
-    parser.add_argument("--voter-b-private-key", default=env_default("CIF_VOTER_B_PRIVATE_KEY"))
-    parser.add_argument("--voter-c-private-key", default=env_default("CIF_VOTER_C_PRIVATE_KEY"))
+    parser.add_argument("--project-recipient", default=None, help="Override CIF_PROJECT_RECIPIENT for this run.")
+    parser.add_argument(
+        "--funder-private-key",
+        default=None,
+        help="UNSAFE override for CIF_TREASURY_FUNDER_PRIVATE_KEY. Prefer the environment variable.",
+    )
+    parser.add_argument(
+        "--voter-a-private-key",
+        default=None,
+        help="UNSAFE override for CIF_VOTER_A_PRIVATE_KEY. Prefer the environment variable.",
+    )
+    parser.add_argument(
+        "--voter-b-private-key",
+        default=None,
+        help="UNSAFE override for CIF_VOTER_B_PRIVATE_KEY. Prefer the environment variable.",
+    )
+    parser.add_argument(
+        "--voter-c-private-key",
+        default=None,
+        help="UNSAFE override for CIF_VOTER_C_PRIVATE_KEY. Prefer the environment variable.",
+    )
     parser.add_argument("--poll-interval-seconds", type=float, default=6.0)
     parser.add_argument("--timeout-seconds", type=float, default=1800.0)
     parser.add_argument(
@@ -235,7 +254,11 @@ def ensure_members_bootstrapped(
 def main() -> None:
     args = parse_args()
 
-    w3 = connect_to_sepolia(require_value(args.rpc_url, "rpc-url or SEPOLIA_RPC_URL"))
+    rpc_url = require_value(
+        resolve_env_or_cli(args.rpc_url, "SEPOLIA_RPC_URL", cli_flag="--rpc-url"),
+        "rpc-url or SEPOLIA_RPC_URL",
+    )
+    w3 = connect_to_sepolia(rpc_url)
     deployment_manifest_path = Path(args.deployment_manifest)
     evidence_output_path = Path(args.evidence_output)
     funding_state_output_path = Path(args.funding_state_output)
@@ -253,15 +276,58 @@ def main() -> None:
 
     project_recipient = to_checksum_address(
         w3,
-        require_value(args.project_recipient, "project-recipient or CIF_PROJECT_RECIPIENT"),
+        require_value(
+            resolve_env_or_cli(args.project_recipient, "CIF_PROJECT_RECIPIENT", cli_flag="--project-recipient"),
+            "project-recipient or CIF_PROJECT_RECIPIENT",
+        ),
         "project-recipient",
     )
 
-    funder_account = parse_account_from_key(require_value(args.funder_private_key, "funder-private-key"))
+    funder_account = parse_account_from_key(
+        require_value(
+            resolve_env_or_cli(
+                args.funder_private_key,
+                "CIF_TREASURY_FUNDER_PRIVATE_KEY",
+                cli_flag="--funder-private-key",
+                sensitive=True,
+            ),
+            "CIF_TREASURY_FUNDER_PRIVATE_KEY or --funder-private-key",
+        )
+    )
     voter_accounts = {
-        "voterA": parse_account_from_key(require_value(args.voter_a_private_key, "voter-a-private-key")),
-        "voterB": parse_account_from_key(require_value(args.voter_b_private_key, "voter-b-private-key")),
-        "voterC": parse_account_from_key(require_value(args.voter_c_private_key, "voter-c-private-key")),
+        "voterA": parse_account_from_key(
+            require_value(
+                resolve_env_or_cli(
+                    args.voter_a_private_key,
+                    "CIF_VOTER_A_PRIVATE_KEY",
+                    cli_flag="--voter-a-private-key",
+                    sensitive=True,
+                ),
+                "CIF_VOTER_A_PRIVATE_KEY or --voter-a-private-key",
+            )
+        ),
+        "voterB": parse_account_from_key(
+            require_value(
+                resolve_env_or_cli(
+                    args.voter_b_private_key,
+                    "CIF_VOTER_B_PRIVATE_KEY",
+                    cli_flag="--voter-b-private-key",
+                    sensitive=True,
+                ),
+                "CIF_VOTER_B_PRIVATE_KEY or --voter-b-private-key",
+            )
+        ),
+        "voterC": parse_account_from_key(
+            require_value(
+                resolve_env_or_cli(
+                    args.voter_c_private_key,
+                    "CIF_VOTER_C_PRIVATE_KEY",
+                    cli_flag="--voter-c-private-key",
+                    sensitive=True,
+                ),
+                "CIF_VOTER_C_PRIVATE_KEY or --voter-c-private-key",
+            )
+        ),
     }
     voter_addresses = {label: account.address for label, account in voter_accounts.items()}
 

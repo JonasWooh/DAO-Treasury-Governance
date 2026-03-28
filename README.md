@@ -1,207 +1,333 @@
 # Campus Innovation Fund DAO
 
-Student-run treasury governance on Sepolia, with a full DAO stack covering hybrid token-plus-reputation voting, milestone-based funding workflows, timelocked treasury execution, Chainlink valuation, Aave reserve management, QA automation, and a React front end.
+This repository is the handoff-ready working tree for a Sepolia deployment of a campus grant DAO. It combines hybrid governance, milestone-based funding, treasury policy, Chainlink valuation, Aave reserve management, evidence export, and a React frontend into one reproducible project.
 
-![Solidity](https://img.shields.io/badge/Solidity-0.8.24-1f2937?logo=solidity)
-![Foundry](https://img.shields.io/badge/Foundry-Enabled-b45309)
-![React](https://img.shields.io/badge/React-18.3.1-0f766e?logo=react)
-![Vite](https://img.shields.io/badge/Vite-7.1-1d4ed8?logo=vite)
-![Network](https://img.shields.io/badge/Network-Sepolia-065f46)
+The main audience for this README is a collaborator who needs to answer three questions quickly:
 
-## Overview
+1. What does the system do?
+2. Where is the source of truth?
+3. Which commands and files matter for normal use?
 
-This repository implements a realistic campus grant DAO rather than a minimal voting demo. Members govern a student innovation treasury, submit and review project proposals, approve milestone-based funding, enforce reserve rules, and manage idle WETH through Aave on Sepolia.
+See `docs/repository-layout.md` for the directory-by-directory map.
 
-The current repository combines the original treasury-governance spine with a V2 workflow layer for proposal intake, project tracking, milestone claims, and hybrid governance.
+## What This Repository Contains
 
-- `CampusInnovationFundToken` provides the ERC20Votes token base
-- `ReputationRegistry` tracks active members, checkpoints, and reputation changes
-- `HybridVotesAdapter` combines token voting power and reputation into a Governor-compatible voting source
-- `InnovationGovernor` and `TimelockController` enforce proposal, voting, queue, and execution flow
-- `FundingRegistry` manages proposal, project, and milestone workflow state
-- `InnovationTreasury` applies constrained treasury policy and milestone release rules
-- `TreasuryOracle` tracks treasury value through Chainlink `ETH/USD`
-- `AaveWethAdapter` demonstrates yield-aware reserve deployment on Sepolia
-- the frontend presents pipeline status, submission flows, proposal and project detail views, treasury NAV, and grading evidence
+- Hybrid voting built from an ERC20Votes token plus a reputation registry
+- Governor plus timelock execution for DAO proposals on Sepolia
+- A funding workflow for proposal intake, project activation, milestone claims, and treasury releases
+- Treasury valuation through Chainlink `ETH / USD`
+- Idle WETH management through an Aave adapter
+- Contract-side safety checks for reentrancy, stale or incomplete oracle data, strict balance reconciliation, disabled ownership handoff on timelocked modules, and workflow state validation
+- Repository-side secret hygiene with repo scanning, safer CLI secret handling, git hooks, and CI rechecks
+- A React app that exposes governance, project, treasury, submission, and evidence views
+- A Python deliverables pipeline that exports manifests, workbook artifacts, screenshots, and the final PDF report
 
-## Highlights
+## How the System Fits Together
 
-- End-to-end DAO architecture with token, hybrid votes, reputation, funding workflow, timelock, treasury, oracle, and adapter modules
-- Sepolia deployment and proposal automation for repeatable milestone and treasury demo execution
-- Python-based QA pipeline for coverage, gas analysis, static analysis, workbook generation, PDF reporting, and final package validation
-- React + Vite + TypeScript front end with dashboard, pipeline, submit, detail, claim, treasury, and evidence views
-- Strict deliverable generation that fails fast if required manifests, screenshots, or runtime artifacts are missing
+The core on-chain flow is:
 
-## Architecture
+`CampusInnovationFundToken -> HybridVotesAdapter -> InnovationGovernor -> TimelockController -> InnovationTreasury`
 
-| Layer | Main components | Purpose |
-| --- | --- | --- |
-| Governance | `CampusInnovationFundToken`, `HybridVotesAdapter`, `ReputationRegistry`, `InnovationGovernor`, `TimelockController` | Hybrid vote accounting, member reputation, proposal lifecycle, quorum, and delayed execution |
-| Funding Workflow | `FundingRegistry` | Proposal intake, project records, milestone claims, workflow status, and evidence linkage |
-| Treasury | `InnovationTreasury`, `TreasuryConstants` | Grant disbursement rules, milestone releases, reserve constraints, and treasury permissions |
-| Integrations | `TreasuryOracle`, `AaveWethAdapter` | Chainlink valuation and Aave V3 WETH reserve management |
-| QA and Automation | `scripts/`, `test/`, `analysis/` | Compile, deploy, validate, test, benchmark, and export deliverables |
-| UI and Evidence | `frontend/`, `deployments/`, `evidence/`, `reports/`, `excel/` | Demo interface, workflow dashboards, manifests, screenshots, workbook, and final report |
+Supporting modules add state and integrations around that path:
 
-## Tech Stack
+- `ReputationRegistry` stores member and reputation checkpoints used by the hybrid voting adapter
+- `FundingRegistry` stores workflow state for submissions, approved projects, milestone claims, evidence URIs, and payout tracking
+- `TreasuryOracle` wraps the Chainlink `ETH / USD` feed and enforces freshness checks
+- `AaveWethAdapter` gives the treasury a constrained interface for supplying and withdrawing WETH on Aave
+- `frontend/src/generated/` and `frontend/public/runtime/` bridge authoritative manifests into the frontend and evidence views
 
-- Solidity `0.8.24`
-- Foundry project layout with OpenZeppelin contracts
-- Python automation and unit/integration testing
-- React `18`, Vite, TypeScript, `wagmi`, `viem`, and React Query
-- Chainlink `ETH/USD`, Aave V3, and hybrid token-plus-reputation governance on Sepolia
+## Where To Start Reading
 
-## Quick Start
+If you are new to the repository, read in this order:
 
-Clone the repository with submodules:
+1. Contracts
+   - `src/governance/InnovationGovernor.sol`
+   - `src/governance/HybridVotesAdapter.sol`
+   - `src/governance/ReputationRegistry.sol`
+   - `src/funding/FundingRegistry.sol`
+   - `src/treasury/InnovationTreasury.sol`
+   - `src/oracle/TreasuryOracle.sol`
+   - `src/adapters/AaveWethAdapter.sol`
+2. Deployment and demo automation
+   - `scripts/deploy_governance_spine.py`
+   - `scripts/deploy_treasury_stack.py`
+   - `scripts/seed_sepolia_demo_state.py`
+   - `scripts/run_sepolia_demo_proposals.py`
+   - `scripts/export_sepolia_evidence.py`
+3. Frontend routes
+   - `frontend/src/App.tsx`
+   - `frontend/src/pages/OverviewPage.tsx`
+   - `frontend/src/pages/ProposalsPage.tsx`
+   - `frontend/src/pages/ProposalDetailPage.tsx`
+   - `frontend/src/pages/ProjectDetailPage.tsx`
+   - `frontend/src/pages/TreasuryPage.tsx`
+   - `frontend/src/pages/EvidencePage.tsx`
+4. Checked-in manifests and deliverables
+   - `deployments/deployments.sepolia.json`
+   - `deployments/demo_evidence.sepolia.md`
+   - `frontend/src/generated/frontend.config.sepolia.json`
+   - `excel/treasury_analysis.sepolia.xlsx`
+   - `reports/final_report.sepolia.pdf`
+
+## Current Checked-In Sepolia State
+
+The current checked-in deployment manifest is `deployments/deployments.sepolia.json`.
+
+Core contract addresses:
+
+- `CampusInnovationFundToken`: `0xCEd46b584d1adC32144fb53B30571bfc3E26Ac0A`
+- `ReputationRegistry`: `0xCdcE19D2E9bFDec7A47FEcD77Fb33E10d2D91aa0`
+- `HybridVotesAdapter`: `0xB7eA2f70AafB10155b6182f4CFBD5DB7e40B6750`
+- `TimelockController`: `0x24bee92d9a67D9D242266B7A771e27f9C783B706`
+- `InnovationGovernor`: `0xE520cd271c41aC8EEE57EFdF12D1cC8229113451`
+- `TreasuryOracle`: `0x8Cb05908b16057ce83BF7BE906b363BE0f94D1aA`
+- `FundingRegistry`: `0x02D01f71a5A33246453673E4d5C8a1A4C43c3508`
+- `AaveWethAdapter`: `0x2351A29BBF20Db7cF1266A0AC0AC2dBb25cdE6F8`
+- `InnovationTreasury`: `0x3f3C8D1C6CE2ff332C75bC56fB059B62059d39d6`
+
+Key checked-in deliverables already present:
+
+- `deployments/demo_evidence.sepolia.md`
+- `frontend/src/generated/frontend.config.sepolia.json`
+- `frontend/public/runtime/*.json`
+- `analysis/coverage/coverage-summary.md`
+- `analysis/gas/gas-report.md`
+- `analysis/static/slither-summary.md`
+- `excel/treasury_analysis.sepolia.xlsx`
+- `reports/final_report.sepolia.pdf`
+- `evidence/screenshots/screenshot-manifest.sepolia.json`
+
+For full transaction evidence, scenario details, and frontend runtime wiring, start with:
+
+- `deployments/demo_evidence.sepolia.md`
+- `deployments/demo_evidence.sepolia.json`
+- `deployments/proposal_scenarios.sepolia.json`
+- `frontend/src/generated/frontend.config.sepolia.json`
+
+## Security Guardrails
+
+The current repository includes both contract-level and repository-level safety checks.
+
+Contract-side protections:
+
+- `InnovationTreasury` uses `ReentrancyGuard` on milestone release and Aave reserve movement paths, rejects stale or malformed oracle data before NAV-sensitive operations, and hard-disables direct ownership transfer and renounce flows
+- `AaveWethAdapter` is restricted to the treasury, uses `nonReentrant`, and performs strict before-and-after balance reconciliation around `transferFrom`, `supply`, and `withdraw`
+- `TreasuryOracle` validates Chainlink round completeness, rejects zero or stale timestamps, and normalizes decimals before returning values to the treasury layer
+- `FundingRegistry` rejects invalid proposal and milestone state transitions, checks linked governor proposal states, and prevents duplicate vote-participation settlement
+
+Repository and automation protections:
+
+- `scripts/check_repo_secrets.py` scans both the worktree and git history for sensitive paths, suspicious secret assignments, and exact matches to locally configured secret values
+- `scripts/cli_security.py` is used by deployment and live-demo scripts to prefer environment variables over CLI secrets and to warn when private keys are passed on the command line
+- `scripts/install_git_hooks.py` enables `.githooks/pre-commit`, which runs the repository secret scan before each commit
+- `.github/workflows/secret-scan.yml` reruns the same scanner in CI on pushes and pull requests
+- `scripts/run_slither_analysis.py` verifies the pinned Windows `solc.exe` checksum before static analysis runs
+- `docs/push-security-checklist.md` is the manual pre-push checklist for generated attachments and secret hygiene
+
+## Standard Workflows
+
+### 1. Environment Setup
+
+Clone with submodules or initialize them after checkout:
 
 ```powershell
-git clone --recurse-submodules https://github.com/JonasWooh/Dao-Treasury-Governance.git
-cd Dao-Treasury-Governance
+git submodule update --init --recursive
 ```
 
-Create and activate the project environment:
+Create and activate the Python and Node-ready development environment:
 
 ```powershell
 conda env create -f environment.yml
 conda activate cif_dao_env
+npm --prefix frontend install
 ```
 
-Install the pinned Solidity compiler and compile contracts:
+Before running Sepolia scripts, populate the environment variables listed in `config/sepolia.env.example`.
+
+### Push Safety
+
+Before committing or pushing:
+
+```powershell
+python scripts/install_git_hooks.py
+python scripts/check_repo_secrets.py --skip-history
+```
+
+Before a real push, run the full worktree-plus-history scan:
+
+```powershell
+python scripts/check_repo_secrets.py
+```
+
+Security rules for this repository:
+
+- keep real secrets only in local env files such as `config/sepolia.env` and `frontend/.env`
+- prefer environment variables over `--private-key` style CLI flags because shells persist history
+- manually review new screenshots, PDFs, XLSX files, and ad hoc JSON exports before staging them
+- treat the checked-in Sepolia addresses and transaction hashes as public demo data; the matching private keys must stay disposable test-only accounts
+
+Deployment and live-demo scripts now warn when secrets are passed via CLI flags instead of environment variables.
+
+See `docs/push-security-checklist.md` for the full push checklist and the pinned `solc.exe` checksum used by Slither on Windows.
+
+### 2. Compile And Test
+
+Install the pinned Solidity compiler and rebuild artifacts:
 
 ```powershell
 python scripts/compile_contracts.py --install-solc
 python scripts/compile_contracts.py --clean
 ```
 
-Install frontend dependencies:
-
-```powershell
-npm --prefix frontend install
-```
-
-Review checked-in protocol and environment references before deploying:
-
-```powershell
-Get-Content config/sepolia.protocols.json
-Get-Content config/sepolia.env.example
-```
-
-## Local Verification
-
-Run the full Python suite:
+Run Python tests:
 
 ```powershell
 python -m unittest discover -s test -p "test_*.py" -v
 ```
 
-Run targeted suites while iterating:
-
-```powershell
-python -m unittest test.integration.test_funding_workflow -v
-python -m unittest test.integration.test_governor_funding_end_to_end -v
-python -m unittest test.integration.test_governance_lifecycle -v
-python -m unittest test.integration.test_innovation_treasury -v
-python -m unittest test.unit.test_funding_registry -v
-python -m unittest test.unit.test_governance_token -v
-python -m unittest test.unit.test_treasury_oracle -v
-python -m unittest test.unit.test_aave_weth_adapter -v
-python -m unittest test.unit.test_submission_deliverables -v
-python -m unittest test.unit.test_v2_reputation_and_hybrid -v
-```
-
-Run frontend tests and build the UI:
+Run frontend tests and produce a production build:
 
 ```powershell
 npm --prefix frontend run test
-$env:VITE_SEPOLIA_RPC_URL="https://your-sepolia-rpc-url"
-$env:VITE_CHAIN_ID="11155111"
 npm --prefix frontend run build
 ```
 
-## Sepolia Demo Flow
+### 3. Deploy To Sepolia
 
-The live demo pipeline is intentionally split into explicit steps so each artifact can be verified independently.
-
-1. Seed the treasury and governance demo state.
+Deploy the governance spine first, then the treasury stack:
 
 ```powershell
-python scripts/seed_sepolia_demo_state.py --help
+python scripts/deploy_governance_spine.py
+python scripts/deploy_treasury_stack.py
 ```
 
-2. Run the staged governance demo with proposal approvals, treasury actions, and milestone transitions.
+The checked-in deployment manifest is written to `deployments/deployments.sepolia.json`.
+
+### 4. Seed Demo State And Execute Governance Scenarios
+
+Seed the project, treasury, and voter state used by the live demo:
 
 ```powershell
-python scripts/run_sepolia_demo_proposals.py --help
+python scripts/seed_sepolia_demo_state.py
 ```
 
-3. Export evidence manifests, transaction tables, and screenshot checklists.
+Run the staged governance proposals:
 
 ```powershell
-python scripts/export_sepolia_evidence.py --help
+python scripts/run_sepolia_demo_proposals.py
 ```
 
-Core Sepolia outputs are written to:
+Export evidence tables and checklist material:
 
-- `deployments/deployments.sepolia.json`
-- `deployments/proposal_scenarios.sepolia.json`
-- `deployments/demo_evidence.sepolia.json`
-- `deployments/demo_evidence.sepolia.md`
-- `evidence/screenshots/screenshot-checklist.sepolia.md`
+```powershell
+python scripts/export_sepolia_evidence.py
+```
 
-## Deliverables Pipeline
+These steps update the authoritative Sepolia runtime manifests under `deployments/`.
 
-After Sepolia manifests are available, generate the final deliverables:
+### 5. Export The Frontend Bundle
+
+Regenerate frontend ABI files, config, and runtime bundle copies from authoritative manifests:
 
 ```powershell
 python scripts/export_frontend_bundle.py
+```
+
+This updates:
+
+- `frontend/src/generated/abi/*.json`
+- `frontend/src/generated/frontend.config.sepolia.json`
+- `frontend/public/runtime/*.json`
+
+### 6. Generate Workbook, Report, And Submission Checks
+
+Generate the treasury analysis workbook:
+
+```powershell
 python scripts/generate_treasury_workbook.py
+```
+
+Generate the final PDF report:
+
+```powershell
 python scripts/generate_final_report.py
+```
+
+Validate the final submission package:
+
+```powershell
 python scripts/validate_submission_package.py
 ```
 
-Generated outputs include:
+If the frontend build is already current and you only want a quick package re-check:
 
-- `frontend/src/generated/frontend.config.sepolia.json`
-- `frontend/src/generated/abi/*.json`
-- `frontend/public/runtime/*.json`
-- `excel/treasury_analysis.sepolia.xlsx`
-- `excel/treasury_analysis.sepolia.summary.json`
-- `reports/final_report.sepolia.pdf`
-- `analysis/coverage/*`
-- `analysis/gas/*`
-- `analysis/static/*`
+```powershell
+python scripts/validate_submission_package.py --skip-frontend-build
+```
 
-## Repository Map
+### 7. Etherscan Verification Helpers
 
-See `docs/repository-layout.md` for the full directory-by-directory reference.
+Regenerate the Standard JSON Input payload used for Etherscan verification:
 
-Important top-level areas:
+```powershell
+python scripts/export_etherscan_standard_input.py --pretty
+```
 
-- `src/` for governance, funding, treasury, oracle, adapters, interfaces, and mocks
-- `test/` for Python unit and integration tests
-- `scripts/` for compile, deployment, QA, and deliverable automation
-- `frontend/` for the React application, runtime bundles, dashboard pages, and workflow detail pages
-- `deployments/` and `evidence/` for Sepolia manifests and screenshot assets
-- `analysis/`, `excel/`, and `reports/` for generated review artifacts
+Run verification through the Etherscan API helper:
 
-## Environment Notes
+```powershell
+$env:ETHERSCAN_API_KEY="your-api-key"
+python scripts/verify_etherscan_contracts.py --deployer-address <deployment-eoa>
+```
 
-- Use `config/sepolia.env.example` as the source of truth for Sepolia deployment inputs
-- `config/sepolia.env` is local-only and should not be committed with real keys
-- The frontend expects `VITE_SEPOLIA_RPC_URL` and `VITE_CHAIN_ID=11155111`
-- The repository uses OpenZeppelin as a submodule, so `--recurse-submodules` is recommended for fresh clones
+For a targeted contract-only run:
 
-## Strictness by Design
+```powershell
+python scripts/verify_etherscan_contracts.py --deployer-address <deployment-eoa> --contracts CampusInnovationFundToken
+```
 
-This project does not silently fall back to fake runtime data or missing deliverables. If required Sepolia manifests, screenshots, workbook outputs, ABI exports, or report inputs are absent or malformed, the relevant step fails explicitly. That strictness is intentional: the repository is designed to support grading, reproducibility, and final-package confidence.
+Helper outputs are written under `output/etherscan/`.
 
-## Project Plan
+## Frontend Route Map
 
-The repository currently reflects both the original baseline plan and a later workflow refinement:
+The frontend route table is defined in `frontend/src/App.tsx`.
 
-- `DAO Prototype Plan on Sepolia.md`
-- `Refine.md`
+| Route | Page | Purpose |
+| --- | --- | --- |
+| `/` | `OverviewPage` | High-level project and proposal summary |
+| `/proposals` | `ProposalsPage` | Proposal pipeline and governance timeline |
+| `/proposals/:proposalId` | `ProposalDetailPage` | Proposal state, evidence, votes, and execution context |
+| `/projects/:projectId` | `ProjectDetailPage` | Project-level state after proposal approval |
+| `/submit` | `SubmitProposalPage` | Submission walkthrough and workflow explanation |
+| `/claims/:proposalId/:milestoneIndex` | `MilestoneClaimPage` | Milestone claim submission and review context |
+| `/treasury` | `TreasuryPage` | Liquid WETH, Aave-supplied WETH, NAV, and oracle view |
+| `/evidence` | `EvidencePage` | Contract registry, execution log, and report support assets |
+
+## Source Of Truth Vs Generated Outputs
+
+Source-of-truth code and configuration:
+
+- `src/` for Solidity contracts and interfaces
+- `scripts/` for deployment, demo execution, reporting, validation, and verification logic
+- `frontend/src/` for application code, except for `frontend/src/generated/`
+- `config/` for checked-in example environment and protocol configuration
+- `deployments/` for checked-in Sepolia manifests after deployment and demo runs
+
+Generated outputs that are intentionally checked in for grading and handoff:
+
+- `artifacts/` compiled Solidity outputs
+- `frontend/src/generated/` generated ABI and frontend config inputs
+- `frontend/public/runtime/` runtime bundle copies consumed by the app
+- `analysis/` QA outputs such as coverage, gas, and static analysis summaries
+- `excel/` workbook deliverables
+- `reports/` final PDF report deliverables
+- `evidence/screenshots/` screenshot manifest, required screenshots, and supporting raw captures
+- `output/` helper outputs such as Etherscan payloads and Playwright logs
+
+## Notes On Project Documents
+
+- `DAO Prototype Plan on Sepolia.md` is the baseline plan and assignment-oriented design note.
+- `Refine.md` is a historical refinement note rather than the primary onboarding document. Use it only as supplemental context.
 
 ## License
 

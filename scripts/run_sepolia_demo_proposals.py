@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from cli_security import resolve_env_or_cli
 from web3 import Web3
 
 from sepolia_demo_common import (
@@ -31,7 +32,6 @@ from sepolia_demo_common import (
     build_demo_scenarios,
     build_empty_evidence_manifest,
     connect_to_sepolia,
-    env_default,
     execute_governor_proposal,
     load_json,
     load_required_contracts,
@@ -52,16 +52,31 @@ from sepolia_demo_common import (
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run the three Sepolia V2 governance proposals.")
-    parser.add_argument("--rpc-url", default=env_default("SEPOLIA_RPC_URL"))
+    parser = argparse.ArgumentParser(
+        description="Run the three Sepolia V2 governance proposals.",
+        epilog="Prefer the *_PRIVATE_KEY environment variables over CLI flags so secrets do not end up in shell history.",
+    )
+    parser.add_argument("--rpc-url", default=None, help="Override SEPOLIA_RPC_URL for this run.")
     parser.add_argument("--deployment-manifest", default=str(DEFAULT_DEPLOYMENT_MANIFEST))
     parser.add_argument("--scenario-output", default=str(DEFAULT_SCENARIO_MANIFEST))
     parser.add_argument("--evidence-output", default=str(DEFAULT_EVIDENCE_MANIFEST))
     parser.add_argument("--funding-state-output", default=str(DEFAULT_FUNDING_STATE_MANIFEST))
-    parser.add_argument("--project-recipient", default=env_default("CIF_PROJECT_RECIPIENT"))
-    parser.add_argument("--voter-a-private-key", default=env_default("CIF_VOTER_A_PRIVATE_KEY"))
-    parser.add_argument("--voter-b-private-key", default=env_default("CIF_VOTER_B_PRIVATE_KEY"))
-    parser.add_argument("--voter-c-private-key", default=env_default("CIF_VOTER_C_PRIVATE_KEY"))
+    parser.add_argument("--project-recipient", default=None, help="Override CIF_PROJECT_RECIPIENT for this run.")
+    parser.add_argument(
+        "--voter-a-private-key",
+        default=None,
+        help="UNSAFE override for CIF_VOTER_A_PRIVATE_KEY. Prefer the environment variable.",
+    )
+    parser.add_argument(
+        "--voter-b-private-key",
+        default=None,
+        help="UNSAFE override for CIF_VOTER_B_PRIVATE_KEY. Prefer the environment variable.",
+    )
+    parser.add_argument(
+        "--voter-c-private-key",
+        default=None,
+        help="UNSAFE override for CIF_VOTER_C_PRIVATE_KEY. Prefer the environment variable.",
+    )
     parser.add_argument("--poll-interval-seconds", type=float, default=6.0)
     parser.add_argument("--timeout-seconds", type=float, default=1800.0)
     parser.add_argument(
@@ -568,7 +583,11 @@ def verify_post_execution_state(
 def main() -> None:
     args = parse_args()
 
-    w3 = connect_to_sepolia(require_value(args.rpc_url, "rpc-url or SEPOLIA_RPC_URL"))
+    rpc_url = require_value(
+        resolve_env_or_cli(args.rpc_url, "SEPOLIA_RPC_URL", cli_flag="--rpc-url"),
+        "rpc-url or SEPOLIA_RPC_URL",
+    )
+    w3 = connect_to_sepolia(rpc_url)
     deployment_manifest_path = Path(args.deployment_manifest)
     scenario_output_path = Path(args.scenario_output)
     evidence_output_path = Path(args.evidence_output)
@@ -592,12 +611,46 @@ def main() -> None:
     if "initialSnapshot" not in evidence_manifest.get("seedState", {}):
         raise RuntimeError("Missing seed-state evidence. Run seed_sepolia_demo_state.py before executing proposals.")
 
-    project_recipient = resolve_project_recipient(w3, args.project_recipient, evidence_manifest)
+    project_recipient = resolve_project_recipient(
+        w3,
+        resolve_env_or_cli(args.project_recipient, "CIF_PROJECT_RECIPIENT", cli_flag="--project-recipient"),
+        evidence_manifest,
+    )
 
     voter_accounts = {
-        "voterA": parse_account_from_key(require_value(args.voter_a_private_key, "voter-a-private-key")),
-        "voterB": parse_account_from_key(require_value(args.voter_b_private_key, "voter-b-private-key")),
-        "voterC": parse_account_from_key(require_value(args.voter_c_private_key, "voter-c-private-key")),
+        "voterA": parse_account_from_key(
+            require_value(
+                resolve_env_or_cli(
+                    args.voter_a_private_key,
+                    "CIF_VOTER_A_PRIVATE_KEY",
+                    cli_flag="--voter-a-private-key",
+                    sensitive=True,
+                ),
+                "CIF_VOTER_A_PRIVATE_KEY or --voter-a-private-key",
+            )
+        ),
+        "voterB": parse_account_from_key(
+            require_value(
+                resolve_env_or_cli(
+                    args.voter_b_private_key,
+                    "CIF_VOTER_B_PRIVATE_KEY",
+                    cli_flag="--voter-b-private-key",
+                    sensitive=True,
+                ),
+                "CIF_VOTER_B_PRIVATE_KEY or --voter-b-private-key",
+            )
+        ),
+        "voterC": parse_account_from_key(
+            require_value(
+                resolve_env_or_cli(
+                    args.voter_c_private_key,
+                    "CIF_VOTER_C_PRIVATE_KEY",
+                    cli_flag="--voter-c-private-key",
+                    sensitive=True,
+                ),
+                "CIF_VOTER_C_PRIVATE_KEY or --voter-c-private-key",
+            )
+        ),
     }
     voter_addresses = {label: account.address for label, account in voter_accounts.items()}
     ensure_voter_configuration(deployment_manifest, voter_addresses, token, reputation)

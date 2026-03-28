@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -22,6 +23,7 @@ SUMMARY_JSON = ANALYSIS_DIR / "slither-summary.json"
 SUMMARY_MD = ANALYSIS_DIR / "slither-summary.md"
 SLITHER_BIN = (Path(sys.executable).resolve().parent / "Scripts" / "slither.exe") if os.name == "nt" else (Path(sys.executable).resolve().parent / "slither")
 SOLC_BIN = ROOT / ".tooling" / "solcx" / "solc-v0.8.24" / ("solc.exe" if os.name == "nt" else "solc")
+EXPECTED_SOLC_SHA256 = "580ee56b61bbcaad953117e1e4a0874d90e6af5cb4ce4359571d7da25f6620e9"
 
 TARGETS = [
     "src/governance/CampusInnovationFundToken.sol",
@@ -64,6 +66,17 @@ def normalize_return_code(return_code: int) -> int:
 def force_remove_readonly(function, path, _excinfo) -> None:
     os.chmod(path, 0o666)
     function(path)
+
+
+def verify_solc_checksum() -> None:
+    if os.name != "nt":
+        return
+    digest = hashlib.sha256(SOLC_BIN.read_bytes()).hexdigest()
+    if digest != EXPECTED_SOLC_SHA256:
+        raise RuntimeError(
+            f"Unexpected solc.exe checksum at {SOLC_BIN}. Expected {EXPECTED_SOLC_SHA256}, got {digest}."
+        )
+
 
 def prepare_temp_project() -> None:
     if TEMP_PROJECT.exists():
@@ -259,6 +272,7 @@ def main() -> None:
         raise FileNotFoundError(f"Slither executable not found at {SLITHER_BIN}")
     if not SOLC_BIN.exists():
         raise FileNotFoundError(f"Solc executable not found at {SOLC_BIN}")
+    verify_solc_checksum()
 
     prepare_temp_project()
     results = [run_slither(target) for target in TARGETS]

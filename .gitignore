@@ -6,8 +6,21 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 test/.tmp/
+config/*.env
+config/*.env.*
 config/sepolia.env
 frontend/.env
+frontend/.env.*
+**/.env.local
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.keystore.json
+keystore/
+wallets/
 .playwright-cli/
 .vite/
 node_modules/
@@ -20,3 +33,4 @@ frontend/node_modules/
 frontend/dist/
 
 deployments/*.local.json
+evidence/screenshots/raw-*.png

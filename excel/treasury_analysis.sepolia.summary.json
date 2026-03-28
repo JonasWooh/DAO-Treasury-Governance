@@ -1,0 +1,19 @@
+{
+  "startingState": {
+    "totalManagedWeth": 3.0,
+    "liquidWeth": 2.4,
+    "suppliedWeth": 0.6,
+    "ethPriceUsd": 1991.82
+  },
+  "scenarioCount": 27,
+  "worstCase": {
+    "scenario": "Bear / 0% / Heavy",
+    "navUsd": 2091.41,
+    "reserveRatio": 60.0
+  },
+  "bestCase": {
+    "scenario": "Bull / 6% APR / Light",
+    "navUsd": 6569.25,
+    "reserveRatio": 74.89
+  }
+}

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v python >/dev/null 2>&1; then
+  python scripts/check_repo_secrets.py
+else
+  python3 scripts/check_repo_secrets.py
+fi
