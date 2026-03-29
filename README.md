@@ -1,5 +1,11 @@
 # Campus Innovation Fund DAO
 
+![Solidity](https://img.shields.io/badge/Solidity-0.8.24-2f2f2f?logo=solidity)
+![Python](https://img.shields.io/badge/Python-Automation-3776AB?logo=python&logoColor=white)
+![React](https://img.shields.io/badge/React-18.3-149ECA?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7.1-646CFF?logo=vite&logoColor=white)
+![Network](https://img.shields.io/badge/Network-Sepolia-6D28D9)
+
 This repository is the handoff-ready working tree for a Sepolia deployment of a campus grant DAO. It combines hybrid governance, milestone-based funding, treasury policy, Chainlink valuation, Aave reserve management, evidence export, and a React frontend into one reproducible project.
 
 The main audience for this README is a collaborator who needs to answer three questions quickly:
@@ -9,6 +15,16 @@ The main audience for this README is a collaborator who needs to answer three qu
 3. Which commands and files matter for normal use?
 
 See `docs/repository-layout.md` for the directory-by-directory map.
+
+## At A Glance
+
+| Area | Current implementation |
+| --- | --- |
+| Governance | ERC20Votes token plus reputation-weighted voting through `HybridVotesAdapter` |
+| Treasury | Timelocked WETH treasury with Chainlink NAV checks and Aave reserve deployment |
+| Workflow | Proposal intake, project activation, milestone claims, vote settlement, and payout tracking |
+| Frontend | React + Vite application with overview, proposals, project, treasury, submission, and evidence routes |
+| Deliverables | Checked-in Sepolia manifests, screenshot package, workbook, QA summaries, and final PDF report |
 
 ## What This Repository Contains
 
@@ -75,15 +91,17 @@ The current checked-in deployment manifest is `deployments/deployments.sepolia.j
 
 Core contract addresses:
 
-- `CampusInnovationFundToken`: `0xCEd46b584d1adC32144fb53B30571bfc3E26Ac0A`
-- `ReputationRegistry`: `0xCdcE19D2E9bFDec7A47FEcD77Fb33E10d2D91aa0`
-- `HybridVotesAdapter`: `0xB7eA2f70AafB10155b6182f4CFBD5DB7e40B6750`
-- `TimelockController`: `0x24bee92d9a67D9D242266B7A771e27f9C783B706`
-- `InnovationGovernor`: `0xE520cd271c41aC8EEE57EFdF12D1cC8229113451`
-- `TreasuryOracle`: `0x8Cb05908b16057ce83BF7BE906b363BE0f94D1aA`
-- `FundingRegistry`: `0x02D01f71a5A33246453673E4d5C8a1A4C43c3508`
-- `AaveWethAdapter`: `0x2351A29BBF20Db7cF1266A0AC0AC2dBb25cdE6F8`
-- `InnovationTreasury`: `0x3f3C8D1C6CE2ff332C75bC56fB059B62059d39d6`
+| Contract | Address |
+| --- | --- |
+| `CampusInnovationFundToken` | `0xCEd46b584d1adC32144fb53B30571bfc3E26Ac0A` |
+| `ReputationRegistry` | `0xCdcE19D2E9bFDec7A47FEcD77Fb33E10d2D91aa0` |
+| `HybridVotesAdapter` | `0xB7eA2f70AafB10155b6182f4CFBD5DB7e40B6750` |
+| `TimelockController` | `0x24bee92d9a67D9D242266B7A771e27f9C783B706` |
+| `InnovationGovernor` | `0xE520cd271c41aC8EEE57EFdF12D1cC8229113451` |
+| `TreasuryOracle` | `0x8Cb05908b16057ce83BF7BE906b363BE0f94D1aA` |
+| `FundingRegistry` | `0x02D01f71a5A33246453673E4d5C8a1A4C43c3508` |
+| `AaveWethAdapter` | `0x2351A29BBF20Db7cF1266A0AC0AC2dBb25cdE6F8` |
+| `InnovationTreasury` | `0x3f3C8D1C6CE2ff332C75bC56fB059B62059d39d6` |
 
 Key checked-in deliverables already present:
 
@@ -142,7 +160,60 @@ conda activate cif_dao_env
 npm --prefix frontend install
 ```
 
-Before running Sepolia scripts, populate the environment variables listed in `config/sepolia.env.example`.
+Prepare the local environment templates:
+
+```powershell
+Copy-Item config\sepolia.env.example config\sepolia.env
+Copy-Item frontend\.env.example frontend\.env
+```
+
+Important: the Python scripts read from the live shell environment, not directly from `config/sepolia.env`. Keep `config/sepolia.env` as your local reference file, then load the values into the current shell before running Sepolia scripts.
+
+One PowerShell-friendly way to load `config\sepolia.env` into the current session is:
+
+```powershell
+Get-Content config\sepolia.env | ForEach-Object {
+  if ($_ -match '^\s*([^#=]+)=(.*)$') {
+    Set-Item -Path ("Env:" + $matches[1].Trim()) -Value $matches[2].Trim()
+  }
+}
+```
+
+The frontend uses `frontend/.env` through Vite, while the Python deployment and demo scripts use normal environment variables from the shell.
+
+### Environment Variables
+
+`config/sepolia.env.example` is the template for the Sepolia workflow variables:
+
+| Variable | Used by | Purpose |
+| --- | --- | --- |
+| `SEPOLIA_RPC_URL` | deployment, demo, verification scripts | RPC endpoint for Sepolia |
+| `SEPOLIA_PRIVATE_KEY` | `deploy_governance_spine.py`, `deploy_treasury_stack.py` | deployer key for the two deployment stages |
+| `CIF_VOTER_A` | governance-spine deploy | address that receives the first seeded governance allocation |
+| `CIF_VOTER_B` | governance-spine deploy | address that receives the second seeded governance allocation |
+| `CIF_VOTER_C` | governance-spine deploy | address that receives the third seeded governance allocation |
+| `CIF_GOVERNANCE_RESERVE` | governance-spine deploy | reserve recipient for the remaining initial token allocation |
+| `CIF_TIMELOCK` | treasury-stack deploy | timelock address from the governance deployment |
+| `CIF_GOVERNOR` | treasury-stack deploy | governor address from the governance deployment |
+| `CIF_REPUTATION_REGISTRY` | treasury-stack deploy | reputation registry address from the governance deployment |
+| `CIF_TREASURY_FUNDER_PRIVATE_KEY` | demo seeding | account used to fund the treasury during the Sepolia demo setup |
+| `CIF_VOTER_A_PRIVATE_KEY` | demo seeding and proposal execution | voter A signer used for delegation and votes |
+| `CIF_VOTER_B_PRIVATE_KEY` | demo seeding and proposal execution | voter B signer used for delegation and votes |
+| `CIF_VOTER_C_PRIVATE_KEY` | demo seeding and proposal execution | voter C signer used for delegation and votes |
+| `CIF_PROJECT_RECIPIENT` | demo seeding and proposal execution | recipient address used by the sample project and milestone payout flow |
+
+Notes:
+
+- `CIF_GOVERNOR` and `CIF_REPUTATION_REGISTRY` are required by `deploy_treasury_stack.py` even though they are filled after the governance-spine deployment step.
+- The easiest source for `CIF_TIMELOCK`, `CIF_GOVERNOR`, and `CIF_REPUTATION_REGISTRY` is `deployments/deployments.sepolia.json` after `deploy_governance_spine.py` completes.
+- The scripts now prefer environment variables over CLI secret flags and warn if you pass private keys directly on the command line.
+
+`frontend/.env.example` is the template for the frontend-only variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `VITE_SEPOLIA_RPC_URL` | RPC endpoint used by the frontend for wallet-connected reads and transactions |
+| `VITE_CHAIN_ID` | chain id expected by the frontend, currently `11155111` for Sepolia |
 
 ### Push Safety
 
@@ -192,7 +263,31 @@ npm --prefix frontend run test
 npm --prefix frontend run build
 ```
 
-### 3. Deploy To Sepolia
+### 3. Run The Frontend Locally
+
+Start the development server:
+
+```powershell
+npm --prefix frontend run dev
+```
+
+Open the local URL printed by Vite, typically `http://localhost:5173`.
+
+The app reads its checked-in runtime data from:
+
+- `frontend/src/generated/frontend.config.sepolia.json`
+- `frontend/public/runtime/*.json`
+
+If you regenerate manifests or ABI files, run `python scripts/export_frontend_bundle.py` before refreshing the frontend.
+
+For a local production-style preview:
+
+```powershell
+npm --prefix frontend run build
+npm --prefix frontend run preview
+```
+
+### 4. Deploy To Sepolia
 
 Deploy the governance spine first, then the treasury stack:
 
@@ -203,7 +298,7 @@ python scripts/deploy_treasury_stack.py
 
 The checked-in deployment manifest is written to `deployments/deployments.sepolia.json`.
 
-### 4. Seed Demo State And Execute Governance Scenarios
+### 5. Seed Demo State And Execute Governance Scenarios
 
 Seed the project, treasury, and voter state used by the live demo:
 
@@ -225,7 +320,7 @@ python scripts/export_sepolia_evidence.py
 
 These steps update the authoritative Sepolia runtime manifests under `deployments/`.
 
-### 5. Export The Frontend Bundle
+### 6. Export The Frontend Bundle
 
 Regenerate frontend ABI files, config, and runtime bundle copies from authoritative manifests:
 
@@ -239,7 +334,7 @@ This updates:
 - `frontend/src/generated/frontend.config.sepolia.json`
 - `frontend/public/runtime/*.json`
 
-### 6. Generate Workbook, Report, And Submission Checks
+### 7. Generate Workbook, Report, And Submission Checks
 
 Generate the treasury analysis workbook:
 
@@ -265,7 +360,7 @@ If the frontend build is already current and you only want a quick package re-ch
 python scripts/validate_submission_package.py --skip-frontend-build
 ```
 
-### 7. Etherscan Verification Helpers
+### 8. Etherscan Verification Helpers
 
 Regenerate the Standard JSON Input payload used for Etherscan verification:
 

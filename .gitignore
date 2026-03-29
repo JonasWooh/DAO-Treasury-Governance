@@ -23,6 +23,7 @@ keystore/
 wallets/
 .playwright-cli/
 .vite/
+.claude/
 node_modules/
 output/
 
