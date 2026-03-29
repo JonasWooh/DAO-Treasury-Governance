@@ -1,0 +1,30 @@
+Campus Innovation Fund DAO
+Sepolia Etherscan Links for Project Token and Core Contracts
+Source manifest: deployments/deployments.sepolia.json
+
+CampusInnovationFundToken
+https://sepolia.etherscan.io/address/0xCEd46b584d1adC32144fb53B30571bfc3E26Ac0A
+
+ReputationRegistry
+https://sepolia.etherscan.io/address/0xCdcE19D2E9bFDec7A47FEcD77Fb33E10d2D91aa0
+
+HybridVotesAdapter
+https://sepolia.etherscan.io/address/0xB7eA2f70AafB10155b6182f4CFBD5DB7e40B6750
+
+TimelockController
+https://sepolia.etherscan.io/address/0x24bee92d9a67D9D242266B7A771e27f9C783B706
+
+InnovationGovernor
+https://sepolia.etherscan.io/address/0xE520cd271c41aC8EEE57EFdF12D1cC8229113451
+
+TreasuryOracle
+https://sepolia.etherscan.io/address/0x8Cb05908b16057ce83BF7BE906b363BE0f94D1aA
+
+FundingRegistry
+https://sepolia.etherscan.io/address/0x02D01f71a5A33246453673E4d5C8a1A4C43c3508
+
+AaveWethAdapter
+https://sepolia.etherscan.io/address/0x2351A29BBF20Db7cF1266A0AC0AC2dBb25cdE6F8
+
+InnovationTreasury
+https://sepolia.etherscan.io/address/0x3f3C8D1C6CE2ff332C75bC56fB059B62059d39d6

@@ -35,3 +35,4 @@ frontend/dist/
 
 deployments/*.local.json
 evidence/screenshots/raw-*.png
+~$*.docx
